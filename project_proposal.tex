@@ -1,6 +1,6 @@
 \documentclass[]{article}
 
-\title{EECS314 Project Proposal: Chess Game in SPIM?}
+\title{EECS314 Project Proposal: Checkers}
 \author{Matt McKee (mwm67), Patrick Landis (pal25)}
 \date{2/18/2013}
 \usepackage[margin=1in]{geometry}
@@ -9,10 +9,26 @@
 \maketitle
 
 \section*{Project Description}
+This project involves building a checkers game in MIPS. Specifically this project will use SPIM for the 
+backend and Python to generate a GUI and input to SPIM. The project will involve a few parts:
+
+\begin{enumerate}
+\item State Machine:
+
+\item Datastructures:
+
+\item Checkers AI: The checkers AI will implement an Alpha-Beta search algorithm which will evaluate
+moves based on metrics that include taking a piece, protecting pieces, if it can be moved onto one
+of the sides of the board, etc...
+ 
+\item Python Frontend: The Python frontend will receive data by piping stdin/stdout to/from the Python.
+The chess program will be able to send and receive messages to Python which will take actions based upon
+those messages to update the game board and send key presses to the MIPS backend.
+\end{enumerate}
 
 \section*{Project Breakdown}
-Matt: \\
+Matt: Will be responsible for the state machine and the datastructures.\\
 \\
-Pat:
+Pat: Will be responsible for the AI implementation and the Python frontend.
 \end{document}
 
