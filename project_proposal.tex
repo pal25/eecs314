@@ -13,9 +13,9 @@ This project involves building a checkers game in MIPS. Specifically this projec
 backend and Python to generate a GUI and input to SPIM. The project will involve a few parts:
 
 \begin{enumerate}
-\item State Machine:
+\item State Machine: this state machine will be the main method used to "run" a game. It will contain states to cover necessary game portions, such as "initialization", "player input", "player move" and "AI turn", and will handle information retrieved from the "board" data structure (explained below) about when to "conclude" a game (such as loss, forfeit, or program termination). A player's turn will be broken down into several states, to handle any input received from the player. The AI turn state will be much simpler, as it will simply need to communicate with the AI. A "check" state will be used to watch for stalemates.
 
-\item Datastructures:
+\item Data Structures: Two main data structures will be employed to manage the game: a "board" and a "piece". The "board" will contain all information about piece location, allegiance (player or AI), and rank (pawn or king). It will also monitor how many pieces each side has remaining. It will also contain a method for promoting a piece when it reaches the opponent's home row. The "piece" structure will contain the methods for moving pieces, including jumps, and for removing pieces. 
 
 \item Checkers AI: The checkers AI will implement an Alpha-Beta search algorithm which will evaluate
 moves based on metrics that include taking a piece, protecting pieces, if it can be moved onto one
