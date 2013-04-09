@@ -6,7 +6,7 @@ Team Members:
 
 Game State
 ==================
-Add state machine
+![Alt text](https://raw.github.com/pal25/eecs314/master/images/mips_state_machine.png "MIPS State Machine")
 
 Python
 ==================
@@ -16,7 +16,7 @@ Python is responsible for:
 + Starting first game
 + Writing/parsing messages
 
-Add state machine
+1[Alt text](https://raw.github.com/pal25/eecs314/master/images/python_state_machine.png "Python State Machine")
 
 Game Message Passing
 ==================
