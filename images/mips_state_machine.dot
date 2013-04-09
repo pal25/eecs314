@@ -1,0 +1,26 @@
+digraph my_fsm {
+    label = "MIPS State Machine";
+    rankdir = RL;
+    node [shape = circle];
+    Update_Report_1 [label = "Update and Report\nCheck Victory"]; 
+    Update_Report_2 [label = "Update and Report\nCheck Victory"]; 
+    Get_Input_P1 [label = "Get Input from P1"];
+    Get_Input_P2 [label = "Get Input from P2/AI"];
+    Validate_Move_1 [label = "Validate P1 Move"];
+    Validate_Move_2 [label = "Validate P2/AI Move"];
+    Init [style=filled,color=".7 .3 1.0"];
+
+    Init -> Get_Input_P1 [label = "game\nstart"];
+    Get_Input_P1 -> Init [label = "reset"];
+    Get_Input_P1 -> Validate_Move_1 [label = "move\npiece"];
+    Validate_Move_1 -> Get_Input_P1 [label = "invalid\nmove"];
+    Update_Report_1 [label="Update and Report\nCheck Victory"]; 
+    Validate_Move_1 -> Update_Report_1 [label = "valid\nmove"];
+    Update_Report_1 -> Get_Input_P2 [label = "no victory"];
+    Get_Input_P2 -> Init [label = "reset"];
+    Get_Input_P2 -> Validate_Move_2 [label = "move\npiece"];
+    Validate_Move_2 -> Get_Input_P2 [label = "invalid\nmove"];
+    Validate_Move_2 -> Update_Report_2 [label = "valid\nmove"];
+    Update_Report_2 -> Init [label = "victory"];
+    Update_Report_2 -> Get_Input_P1 [label = "no victory"];
+}
