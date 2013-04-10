@@ -16,7 +16,7 @@ Python is responsible for:
 + Starting first game
 + Writing/parsing messages
 
-1[Alt text](https://raw.github.com/pal25/eecs314/master/images/python_state_machine.png "Python State Machine")
+![Alt text](https://raw.github.com/pal25/eecs314/master/images/python_state_machine.png "Python State Machine")
 
 Game Message Passing
 ==================
