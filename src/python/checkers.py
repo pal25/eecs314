@@ -1,19 +1,24 @@
 import subprocess, select, os.path
 import pygame
 
+START_MENU = 0
+IN_PROGRESS = 1
+VICTORY = 0
+
 spim = subprocess.Popen(['spim', '-file', 'test.s'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 class GameBoard():
-    def __init__(self, width=640, height=480):
-        self.size = (width, height)
-        self.screen = pygame.display.set_mode(self.size, pygame.RESIZABLE)
-        pygame.display.set_caption("Checkers in MIPS")
+    def __init__(self, size=None, width=640, height=480, image='background.png'):
+        if size:
+            self.size = size
+        else:
+            self.size = (width, height)
         
-        colorbg = pygame.Surface(self.size).convert()
-        colorbg.fill((255, 255, 255))
-        self.screen.blit(colorbg, (0, 0))
-        self.background = self.load_image("background.png")
-
+        self.screen = pygame.display.set_mode(self.size, pygame.RESIZABLE)
+        self.background = self.load_image(image)
+        pygame.display.set_caption('Checkers in MIPS')
+        self.draw_board()
+        
     def load_image(self, filename):
         filename = os.path.join('images', filename)
 
@@ -26,6 +31,7 @@ class GameBoard():
         return image
 
     def draw_board(self):
+        self.screen = pygame.display.set_mode(self.size, pygame.RESIZABLE)
         self.background = pygame.transform.scale(self.background, self.size)
 
         colorbg = pygame.Surface(self.size).convert()
@@ -69,25 +75,8 @@ class CheckerPiece(pygame.sprite.Sprite):
     def move(self):        
         pass
 
-def update_number(board, newval):
-    font = pygame.font.Font(None, 36)
-    text = font.render(str(newval), 1, (10, 10, 10))
-    textpos = text.get_rect()
-    textpos.centerx = board.background.get_rect().centerx
-    textpos.centery = board.background.get_rect().centery
-
-    board.background.blit(text, textpos)
-    board.screen.blit(board.background, (0, 0)) 
-    
-    board.draw_board()
-    return board
-
 def main(board):
-    spim.stdout.readline()
-    spim.stdout.readline()
-    spim.stdout.readline()
-    spim.stdout.readline()
-    spim.stdout.readline()
+    STATE = START_MENU
 
     while True:
         try:
@@ -98,11 +87,11 @@ def main(board):
 
         if rdata:
             data = spim.stdout.readline()
-            print 'Found data: %s' % data
             spim.stdout.flush()
             data = data[:-1]
-            board = update_number(board, data)
-        else:
+            print 'Found data: ', data
+        
+        elif STATE is IN_PROGRESS:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     print event
@@ -112,8 +101,46 @@ def main(board):
                         spim.stdin.write('1\n')
                     elif event.key == pygame.K_LEFT:
                         spim.stdin.write('0\n')
+                elif event.type == pygame.VIDEORESIZE:
+                    board.size = event.size
+                    board.draw_board()
+        
+        elif STATE is START_MENU:
+            LEFT = 0
+            RIGHT = 1
+            NO_CHOICE = 3
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    print event
+                    return
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        print 'Selecting One Player'
+                        board = GameBoard(board.size, image='basic_intro_p1.bmp')
+                    elif event.key == pygame.K_RIGHT:
+                        print 'Selecting Two Player'
+                        board = GameBoard(board.size, image='basic_intro_p2.bmp')
+                    elif event.key == pygame.K_RETURN:
+                        STATE = IN_PROGRESS
+                        board = GameBoard(board.size, image='background.png')
+                        print 'Made a selection'
+                elif event.type == pygame.VIDEORESIZE:
+                    board.size = event.size
+                    board.draw_board()
+        
+        else:
+            pass
+        
 
 if __name__ == '__main__':
+    spim.stdout.readline()
+    spim.stdout.readline()
+    spim.stdout.readline()
+    spim.stdout.readline()
+    spim.stdout.readline()
+    spim.stdout.flush()
+
     pygame.init()
-    init_board = GameBoard(width=132, height=132)
+    init_board = GameBoard(width=264, height=264, image='basic_intro_none.bmp')
     main(init_board)
