@@ -1,0 +1,139 @@
+methods contained (might place code inline in actual function
+assuming spaces are 0-indexed
+
+init_board:
+
+    set proper bits of has_pieces
+    set proper bits of color
+    set all rank bits to 0
+        #specify this to allow easy board reset
+
+    return to calling location
+
+ai_doturn
+
+
+    return to calling location
+
+update_board
+
+    clear "move from" position in all three
+    set "move to position in all three
+
+    if(move is a jump){
+        clear jumped piece location
+    }
+
+    reset "jump" bit
+
+    return to calling location
+
+check_victory
+
+
+    return to calling location
+
+main:
+
+    int[64] has_piece
+    int[64] color
+    int[64] rank
+
+    #bit for checking for victory
+    victory=0
+
+    #bit for validating move
+    valid=0
+
+    #bit for checking if a piece has been jumped
+    jump=0
+
+    jump and link call to init_board
+
+    #get message for playing AI or not
+    AI = 0/1 #(false/true, 2player/1player)
+
+    #label for player 1's turn
+    p1:
+
+    get message for move
+
+    if(message is restart command){
+        jump to main
+    } 
+    
+    while(the message isn't finished){
+
+        from = space moving from
+        to = space moving to
+    
+        jump and link to validate_move
+
+        if(move is not valid){
+            send "invalid move" message to python
+            jump to p1
+        }
+        
+        jump and link to update board
+
+    }
+
+    if(victory = 1){
+        send "player 2 wins" message to python
+        jump to main
+    }
+    #end p1 turn
+    
+    #if AI enabled, jump to AI code instead
+    branch to AI lable if AI = 1
+
+    #label for player 2's turn
+    p2:
+
+    get message for move
+
+    if(message is restart command){
+        jump to main
+    } 
+    
+    while(the message isn't finished){
+
+        from = space moving from
+        to = space moving to
+    
+        jump and link to validate_move
+
+        if(move is not valid){
+            send "invalid move" message to python
+            jump to p1
+        }
+        
+        jump and link to update board
+
+    }
+
+    jump and link to check_victory
+
+    if(victory = 1){
+        send "player 2 wins" message to python
+        jump to main
+    }
+    jump to p1
+
+    #end p2 turn
+        
+    #label for AI code
+    AI:
+
+    jump and link to AI_doturn
+
+    check_victory
+
+    if(victory = 1){
+        send "player 2 wins" message to python
+        jump to main
+    }
+    
+    jump to p1
+    #end AI turn
+}
