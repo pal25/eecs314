@@ -10,27 +10,48 @@ init_board:
 
     return to calling location
 
-ai_doturn
+ai_doturn:
 
 
     return to calling location
 
-update_board
+update_board:
 
     clear "move from" position in all three
-    set "move to position in all three
+    set "move to" position in all three
+
+    jump and link to jump_check
 
     if(move is a jump){
         clear jumped piece location
     }
 
-    reset "jump" bit
+    jump=0
 
     return to calling location
 
-check_victory
+#checks to see if a move is a jump
+jump_check:
 
+    return to calling location
 
+check_victory:
+
+    victory = 0;
+    red_win = 1;
+    black_win = 1;
+
+    #if red has at least one piece, black hasn't won
+    for(all positions on board)
+        if(space is occupied and it has red)
+            black_win = 0;
+
+    #if black has at least one piece, red hasn't won
+    for(all positions on board
+        if(space is occupied and it has black)
+            red_win = 0;
+
+    victory = (red_win | black_win)
     return to calling location
 
 main:
@@ -56,84 +77,84 @@ main:
     #label for player 1's turn
     p1:
 
-    get message for move
+        get message for move
 
-    if(message is restart command){
-        jump to main
-    } 
+        if(message is restart command){
+            jump to main
+        } 
     
-    while(the message isn't finished){
+        while(the message isn't finished){
 
-        from = space moving from
-        to = space moving to
-    
-        jump and link to validate_move
-
-        if(move is not valid){
-            send "invalid move" message to python
-            jump to p1
-        }
+            from = space moving from
+            to = space moving to
         
-        jump and link to update board
+            jump and link to validate_move
 
-    }
+            if(move is not valid){
+                send "invalid move" message to python
+                jump to p1
+            }
+            
+            jump and link to update board
 
-    if(victory = 1){
-        send "player 2 wins" message to python
-        jump to main
-    }
-    #end p1 turn
+        }
+
+        if(victory = 1){
+            send "player 2 wins" message to python
+            jump to main
+        }
+        #end p1 turn
     
     #if AI enabled, jump to AI code instead
-    branch to AI lable if AI = 1
+    branch to ai label if AI = 1
 
     #label for player 2's turn
     p2:
 
-    get message for move
+        get message for move
 
-    if(message is restart command){
-        jump to main
-    } 
+        if(message is restart command){
+            jump to main
+        } 
     
-    while(the message isn't finished){
+        while(the message isn't finished){
 
-        from = space moving from
-        to = space moving to
+            from = space moving from
+                to = space moving to
     
-        jump and link to validate_move
+            jump and link to validate_move
 
-        if(move is not valid){
-            send "invalid move" message to python
-            jump to p1
+            if(move is not valid){
+                send "invalid move" message to python
+                jump to p1
+            }
+        
+            jump and link to update board
+
         }
+
+        jump and link to check_victory
+
+        if(victory = 1){
+            send "player 2 wins" message to python
+            jump to main
+        }
+        jump to p1
+
+        #end p2 turn
         
-        jump and link to update board
+    #label for ai code
+    ai:
 
-    }
+        jump and link to ai_doturn
 
-    jump and link to check_victory
+        check_victory
 
-    if(victory = 1){
-        send "player 2 wins" message to python
-        jump to main
-    }
-    jump to p1
-
-    #end p2 turn
-        
-    #label for AI code
-    AI:
-
-    jump and link to AI_doturn
-
-    check_victory
-
-    if(victory = 1){
-        send "player 2 wins" message to python
-        jump to main
-    }
+        if(victory = 1){
+            send "player 2 wins" message to python
+            jump to main
+        }
     
-    jump to p1
-    #end AI turn
+        jump to p1
+        #end AI turn
 }
