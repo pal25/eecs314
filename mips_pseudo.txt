@@ -1,24 +1,23 @@
-methods contained (might place code inline in actual function
-assuming spaces are 0-indexed
+assuming gameboard spaces are 0-indexed
 
 init_board:
 
     set proper bits of has_pieces
     set proper bits of color
     set all rank bits to 0
-        #specify this to allow easy board reset
 
     return to calling location
 
 ai_doturn:
 
+    #code for AI goes here
 
     return to calling location
 
 update_board:
 
-    clear "move from" position in all three
-    set "move to" position in all three
+    clear "move from" position in all three arrays
+    set "move to" position in all three arrays
 
     jump and link to jump_check
 
