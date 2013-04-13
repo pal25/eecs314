@@ -70,7 +70,30 @@ move_check:
     #this is only called when "valid" is set to 1, but there is an explicit set here, for clarity.
 
     valid = 1;
+
+    if(from space is not user controlled)
+        valid = 0
+
+    if(to space is occupied)
+        valid = 0
+
+    temp1=1;
+    if(to space isn't within forward range)
+        temp1 = 0;
+
+    temp2=1;
+    if(from space contains a king{
+        if(space isn't within range of backwards move){
+            temp2 = 0;
+        }
+    }
     
+    temp3=0;
+    #if its a valid forward or backward move, temp3 = 1
+    temp3 = (temp1|temp2)
+
+    valid = (valid & temp3)
+
     return to calling location
 
 #checks to see if a move is a jump
