@@ -38,10 +38,8 @@ class Game(object):
                         print "Chosing Return Value"
                         self.running = True
                     elif event.key == pygame.K_ESCAPE:
-                        print"Quitting Game"
                         quit_game()
                 elif event.type == pygame.QUIT:
-                    print "Quitting Game"
                     quit_game()
                    
             p1 = "One Player"
@@ -56,16 +54,27 @@ class Game(object):
 
     def run(self):
         while self.running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    print "Quitting Game"
-                    quit_game()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        print"Quitting Game"
+            try:
+                rdata, __, __ = select.select([spim.stdout.fileno()], [], [], 0.0001)
+            except select.error, err:
+                print "Error: ", err.args[0]
+                quit_game()
+
+            if rdata:
+                data = spim.stdout.readline()
+                spim.stdout.flush()
+                data = data[:-1] # remove newline
+                print "Found Data: ", data
+            else:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
                         quit_game()
-            
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            quit_game()
+                            
             self.clock.tick(FPS)
+
 def main():
     pygame.init()
     pygame.display.set_caption('Checkers in MIPS')
@@ -74,6 +83,7 @@ def main():
     game = Game()
 
 def quit_game():
+    print "Quitting Game"
     sys.exit()
 
 if __name__ == "__main__":
