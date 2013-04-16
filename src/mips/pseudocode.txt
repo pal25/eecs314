@@ -1,0 +1,313 @@
+#assuming gameboard spaces are 0-indexed
+
+init_board:
+
+    set proper bits of has_pieces
+    set proper bits of color
+    set all rank bits to 0
+
+    return to calling location
+
+ai_doturn:
+
+    #code for AI goes here
+
+    return to calling location
+
+validate_move_p1:
+
+    valid = 1
+
+    if("from" space doesn't have a player controlled peice){
+        valid = 0
+        return to calling location
+    }
+
+    jump and link to move_check
+    if(valid = 0)
+        return to calling location
+
+    if(move = 1){
+        move = 0
+        return to calling location
+    }
+
+    jump and link to jump_check
+    if(valid = 0){
+        return to calling location
+    }
+
+    if(jump = 1){
+        jump = 0
+        return to calling location
+    }
+
+    #we only reach this code if the move is not an allowed movement or jump
+    valid = 0
+
+    return to calling location
+
+validate_move_p2:
+
+    valid = 1
+
+    if("from" space doesn't have a player controlled peice){
+        valid = 0
+        return to calling location
+    }
+
+    jump and link to move_check_p2
+    if(valid = 0)
+        return to calling location
+
+    if(move = 1){
+        move = 0
+        return to calling location
+    }
+
+    jump and link to jump_check_p2
+    if(valid = 0){
+        return to calling location
+    }
+
+    if(jump = 1){
+        jump = 0
+        return to calling location
+    }
+
+    #we only reach this code if the move is not an allowed movement or jump
+    valid = 0
+
+    return to calling location
+
+update_board:
+
+    clear "move from" position in all three arrays
+    set "move to" position in all three arrays
+
+    jump and link to jump_check
+
+    #if move is a jump
+    if(jump = 1){
+        clear jumped piece location
+    }
+
+    jump=0
+
+    return to calling location
+
+#checks to see if a movement is a move (as opposed to a jump)
+move_check_p1:
+    #checks to see if a movement is a valid move
+    #"valid" must mean: "from" space is player controlled, "to" space is empty, "to" space is within range (two checks: for pawn, and for king)
+    #this is only called when "valid" is set to 1, but there is an explicit set here, for clarity.
+
+    valid = 1;
+
+    if(from space is not user controlled)
+        valid = 0
+
+    if(to space is occupied)
+        valid = 0
+
+    temp1=1;
+    if(to space isn't within forward range)
+        temp1 = 0;
+
+    temp2=1;
+    if(from space contains a king{
+        if(space isn't within range of backwards move){
+            temp2 = 0;
+        }
+    }
+    
+    temp3=0;
+    #if its a valid forward or backward move, temp3 = 1
+    temp3 = (temp1|temp2)
+
+    valid = (valid & temp3)
+
+    return to calling location
+
+#checks to see if a move is a jump
+jump_check_p1:
+    #checks to see if a movement is a valid jump
+    #"valid" must mean: "from" space is player controlled, "to" space is empty, "to" space is within range (two checks: for pawn, and for king), jumped space has an opponent controlled piece
+    #this is only called when "valid" is set to 1, but there is an explicit set here, for clarity.
+
+    valid = 1
+    
+    return to calling location
+
+#checks to see if a movement is a move (as opposed to a jump)
+move_check_p2:
+    #checks to see if a movement is a valid move
+    #"valid" must mean: "from" space is player controlled, "to" space is empty, "to" space is within range (two checks: for pawn, and for king)
+    #this is only called when "valid" is set to 1, but there is an explicit set here, for clarity.
+
+    valid = 1;
+
+    if(from space is not user controlled)
+        valid = 0
+
+    if(to space is occupied)
+        valid = 0
+
+    temp1=1;
+    if(to space isn't within forward range)
+        temp1 = 0;
+
+    temp2=1;
+    if(from space contains a king{
+        if(space isn't within range of backwards move){
+            temp2 = 0;
+        }
+    }
+    
+    temp3=0;
+    #if its a valid forward or backward move, temp3 = 1
+    temp3 = (temp1|temp2)
+
+    valid = (valid & temp3)
+
+    return to calling location
+
+#checks to see if a move is a jump
+jump_check_p2:
+    #checks to see if a movement is a valid jump
+    #"valid" must mean: "from" space is player controlled, "to" space is empty, "to" space is within range (two checks: for pawn, and for king), jumped space has an opponent controlled piece
+    #this is only called when "valid" is set to 1, but there is an explicit set here, for clarity.
+
+    valid = 1
+    
+    return to calling location
+check_victory:
+
+    victory = 0
+    red_win = 1
+    black_win = 1
+
+    #if red has at least one piece, black hasn't won
+    for(all positions on board)
+        if(space is occupied and it has red)
+            black_win = 0
+
+    #if black has at least one piece, red hasn't won
+    for(all positions on board
+        if(space is occupied and it has black)
+            red_win = 0
+
+    victory = (red_win | black_win)
+    return to calling location
+
+main:
+
+    int[64] has_piece
+    int[64] color
+    int[64] rank
+
+    #bit for checking for victory
+    victory=0
+
+    #bit for validating move
+    valid=0
+
+    #bit for checking if a piece is making a movement
+    move=0;
+
+    #bit for checking if a piece is making a jump
+    jump=0
+
+    jump and link call to init_board
+
+    #get message for playing AI or not
+    AI = 0/1 #(false/true, 2player/1player)
+
+    #label for player 1's turn
+    p1:
+
+        get message for move
+
+        if(message is restart command){
+            jump to main
+        } 
+    
+        while(the message isn't finished){
+
+            from = space moving from
+            to = space moving to
+        
+            jump and link to validate_move_p1
+
+            if(move is not valid){
+                send "invalid move" message to python
+                jump to p1
+            }
+            
+            jump and link to update board
+
+        }
+
+        jump and link to check_victory
+
+        if(victory = 1){
+            send "player 1 wins" message to python
+            jump to main
+        }
+        #end p1 turn
+    
+    #if AI enabled, jump to AI code instead
+    if(AI = 1){
+        jump to ai
+    }
+
+    #label for player 2's turn
+    p2:
+
+        get message for move
+
+        if(message is restart command){
+            jump to main
+        } 
+    
+        while(the message isn't finished){
+
+            from = space moving from
+            to = space moving to
+    
+            jump and link to validate_move_p2
+
+            if(move is not valid){
+                send "invalid move" message to python
+                jump to p2
+            }
+        
+            jump and link to update board
+
+        }
+
+        jump and link to check_victory
+
+        if(victory = 1){
+            send "player 2 wins" message to python
+            jump to main
+        }
+        jump to p1
+
+        #end p2 turn
+        
+    #label for ai code
+    ai:
+
+        jump and link to ai_doturn
+
+        jump and link to check_victory
+
+        if(victory = 1){
+            send "player 2 wins" message to python
+            jump to main
+        }
+    
+        jump to p1
+        #end AI turn
+}
