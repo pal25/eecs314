@@ -1,6 +1,7 @@
 import pygame
 import os.path
-import utils
+
+from constants import *
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)

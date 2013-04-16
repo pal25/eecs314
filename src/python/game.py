@@ -1,8 +1,8 @@
 import pygame
-from screen import GameScreen
 import sys, subprocess, select
 
-FPS = 30
+from constants import *
+from screen import GameScreen
 
 spim = subprocess.Popen(['spim', '-file', 'test.s'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
