@@ -4,6 +4,10 @@ victory: .byte 0
 valid: .byte 0
 jorm: .byte 0
 isai: .byte 0
+b_haspeice .word 0
+#for color, 0 is p1, 1 is p2
+b_color .word 0
+b_rank .word 0
 
 .text
 #s0 register helps in return
@@ -31,11 +35,16 @@ main:
         #if the space moving from is "32", its the skip to end of turn
         beq $s1, $s3, endp1
         
-        #get space moving to
+        #movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
         li $v0, 5
         syscall
         move $s2, $v0
     
+        jal validateP1
+
+
+
+
     endp1:
 
     #if AI enabled, jump to AI
