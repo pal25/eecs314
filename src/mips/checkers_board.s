@@ -6,11 +6,14 @@ jorm: .byte 0
 isai: .byte 0
 
 .text
+#s0 register helps in return
+#s1 register used for "from" space
+#s2 register used for "to" space
+#s3 register used to statically hold "32", the "end of turn" value
 main:
 
-    #declare three registers for board data
-    #!s0, s1, s2
-    
+    addi $s3, $zero, 32
+
     #get bit of AI choice
     li $v0, 5
     syscall
@@ -20,11 +23,20 @@ main:
     #!loop through all bits of board registers, set proper bits 
 
     p1:
-        #!get message for move (do we need a loop? how exactly is message sent?)
+        #get message for move
+        li $v0, 5
+        syscall
+        move $s1, $v0
 
-        #!get bit moving from, set to $t8
-        #!get bit moving to, set to $t9
-    #end p1
+        #if the space moving from is "32", its the skip to end of turn
+        beq $s1, $s3, endp1
+        
+        #get space moving to
+        li $v0, 5
+        syscall
+        move $s2, $v0
+    
+    endp1:
 
     #if AI enabled, jump to AI
     lb $t0, isai
@@ -32,13 +44,13 @@ main:
 
     p2:
         
-	    j p1
-    #end p2
+	endp2:
+    j p1
 
     ai:
 	
-	    j p1
-    #end ai
+    endai
+	j p1
 
 validateP1:
 
