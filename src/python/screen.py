@@ -2,6 +2,7 @@ import pygame
 import os.path
 
 from constants import *
+from checkerpiece import CheckerPiece
 
 class GameScreen(object):
 
@@ -22,6 +23,9 @@ class GameScreen(object):
                               0, 2, 0, 2, 0, 2, 0, 2,
                               2, 0, 2, 0, 2, 0, 2, 0,
                               0, 2, 0, 2, 0, 2, 0, 2]
+
+        self.p1_group = pygame.sprite.Group()
+        self.p2_group = pygame.sprite.Group()
 
         if game_board:
             self.draw_pieces(self.state)
@@ -45,10 +49,12 @@ class GameScreen(object):
                 pygame.draw.rect(self.bg, color, ((xpos, ypos), (x_size, y_size)))
 
                 if state[row*8+column] == 1:
-                    pygame.draw.circle(self.bg, RED, (xpos+x_size/2, ypos+y_size/2), y_size/2, 0)
+                    self.p1_group.add(CheckerPiece(x_size, y_size, xpos+x_size/2, ypos+y_size/2, RED))
+                    #pygame.draw.circle(self.bg, RED, (xpos+x_size/2, ypos+y_size/2), y_size/2, 0)
                 elif state[row*8+column] == 2:
-                    pygame.draw.circle(self.bg, BLACK, (xpos+x_size/2, ypos+y_size/2), y_size/2, 0)
-
+                    self.p2_group.add(CheckerPiece(x_size, y_size, xpos+x_size/2, ypos+y_size/2, BLACK))
+                    #pygame.draw.circle(self.bg, BLACK, (xpos+x_size/2, ypos+y_size/2), y_size/2, 0)
+                    
                 xpos += x_size
                 tile = tile + 1
                     
@@ -56,13 +62,18 @@ class GameScreen(object):
             xpos = 0
             ypos += y_size
 
-        self.screen.blit(self.bg, (0, 0))            
-        pygame.display.flip()
+        self.screen.blit(self.bg, (0, 0))  
 
+        self.p1_group.update()
+        self.p1_group.draw(self.screen)
+
+        self.p2_group.update()
+        self.p2_group.draw(self.screen)
+
+        pygame.display.flip()
 
     def draw_text(self, text, color1, color2, xpos, ypos):
         rendering = self.font.render(text, True, color1, color2)
-        
         self.screen.blit(rendering, (xpos-rendering.get_width()/2, ypos))
 
     def draw_text_small(self, text, color1, color2, xpos, ypos):

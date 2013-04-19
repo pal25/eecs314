@@ -12,6 +12,11 @@ class Game(object):
         self.width = width
         self.height = height
 
+        self.p1_move = 0
+        self.p1_validate = 1
+        self.p2_move = 2
+        self.p2_validate = 3
+
         self.victory = False
         self.running = False
         self.exiting = False
