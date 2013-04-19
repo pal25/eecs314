@@ -6,6 +6,8 @@ class CheckerPiece(pygame.sprite.Sprite):
         self.image = pygame.Surface((width, height))
         self.image.fill((100, 100, 100))
         self.image.set_colorkey((100, 100, 100))
+        
+        self.kinged = False
 
         self.xpos = xpos
         self.ypos = ypos
@@ -22,4 +24,4 @@ class CheckerPiece(pygame.sprite.Sprite):
         self.rect.center = (self.xpos, self.ypos)
 
     def move(self, xpos, ypos):
-        self.rect.center = pygame.mouse.get_pos()
+        self.rect.center = (xpos, ypos)

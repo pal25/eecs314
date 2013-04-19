@@ -12,11 +12,6 @@ class Game(object):
         self.width = width
         self.height = height
 
-        self.p1_move = 0
-        self.p1_validate = 1
-        self.p2_move = 2
-        self.p2_validate = 3
-
         self.victory = False
         self.running = False
         self.exiting = False
@@ -57,26 +52,52 @@ class Game(object):
             self.screen.draw_menu(p1, p2)
             self.clock.tick(FPS)
 
-    def run(self):
-        while self.running:
-            try:
-                rdata, __, __ = select.select([spim.stdout.fileno()], [], [], 0.0001)
-            except select.error, err:
-                print "Error: ", err.args[0]
-                quit_game()
+    def read_spim(self):
+        data = None
 
-            if rdata:
-                data = spim.stdout.readline()
-                spim.stdout.flush()
-                data = data[:-1] # remove newline
-                print "Found Data: ", data
-            else:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
+        try:
+            rdata, __, __ = select.select([spim.stdout.fileno()], [], [], 0.0001)
+        except select.error, err:
+            print "Error: ", err.args[0]
+            quit_game()
+
+        if rdata:
+            data = spim.stdout.readline()
+            spim.stdout.flush()
+            data = data[:-1] # remove newline
+            print "Found Data: ", data
+        
+        return data
+
+    def parse_data(self, data):
+        pass
+
+    def run(self):
+        state = P1_MOVE
+
+        while self.running:
+            if state == P1_MOVE:
+                pass
+            
+            elif state == P1_VALIDATE:
+                data = read_spim()
+                if data:
+                    pass
+
+            elif state == P2_MOVE:
+                pass
+            
+            elif state == P2_VALIDATE:
+                data = read_spim()
+                if data:
+                    pass
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    quit_game()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
                         quit_game()
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:
-                            quit_game()
                             
             self.clock.tick(FPS)
 

@@ -50,10 +50,8 @@ class GameScreen(object):
 
                 if state[row*8+column] == 1:
                     self.p1_group.add(CheckerPiece(x_size, y_size, xpos+x_size/2, ypos+y_size/2, RED))
-                    #pygame.draw.circle(self.bg, RED, (xpos+x_size/2, ypos+y_size/2), y_size/2, 0)
                 elif state[row*8+column] == 2:
                     self.p2_group.add(CheckerPiece(x_size, y_size, xpos+x_size/2, ypos+y_size/2, BLACK))
-                    #pygame.draw.circle(self.bg, BLACK, (xpos+x_size/2, ypos+y_size/2), y_size/2, 0)
                     
                 xpos += x_size
                 tile = tile + 1
