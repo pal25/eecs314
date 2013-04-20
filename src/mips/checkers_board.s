@@ -15,6 +15,7 @@ reset .byte 101
 #s0 register helps in return
 #s1 register used for "from" space
 #s2 register used for "to" space
+#also use t0-t3
 main:
 
     #get bit of AI choice
@@ -119,38 +120,210 @@ main:
 
 validateP1:
 
+    #move return address to s0 to allow jal calls in this function
     move $s0, $ra
 
+    #default valid to 0
+    la $t0, valid
+    sb $zero, ($t0)
     
+    #if the piece is on the botton of the board, it can't move down
+    add $t0, $zero, $zero
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep1
+
+    jal validatedownsidemove
+    
+    #if the piece is on the side, jump to kingmove, else, validatedownmove
+    add $t0, $zero, $zero
+    addi $t0, $zero, 4
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 7
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 7
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 7
+    beq $s1, $t0, kingmovep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep1
+    
+    jal validatedownmove
+    
+    #if a pawn move isn't valid, see if a king move is
+    kingmovep1:
+
+    #!see if the piece's square has a king, store in t0
+    
+    
+    #if the piece is on the top of the board, it can't move up
+    add $t0, $zero, $zero
+    addi $t0, $zero, 28
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep1
+    
+    jal validateupsidemove
+    
+    #if the piece is on the side, validateupmove, else, jump to endofvalidate
+    add $t0, $zero, $zero
+    addi $t0, $zero, 3
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 7
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 7
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep1
+    addi $t0, $zero, 7
+    beq $s1, $t0, endvalidatep1
+    
+    jal validateupmove
+
+    endvalidatep1:
     jr $s0
 
-movechkP1:
+validatep2:
 
-    
-    jr $ra
-
-jumpchkP1:
-
-    
-    jr $ra
-
-validateP2:
-
+    #move return address to s0 to allow jal calls in this function
     move $s0, $ra
 
+    #default valid to 0
+    la $t0, valid
+    sb $zero, ($t0)
     
+    #if the piece is on the top of the board, it can't move up
+    add $t0, $zero, $zero
+    addi $t0, $zero, 28
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep2
+
+    jal validateupsidemove
+    
+    #if the piece is on the side, jump to kingmove, else, validateupmove
+    add $t0, $zero, $zero
+    addi $t0, $zero, 3
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 7
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 7
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, kingmovep2
+    addi $t0, $zero, 7
+    beq $s1, $t0, kingmovep2
+    
+    jal validateupmove
+
+    #if a pawn move isn't valid, see if a king move is
+    kingmovep2:
+
+    #!see if the piece's square has a king, store in t0
+    
+    #if the piece is on the botton of the board, it can't move down
+    add $t0, $zero, $zero
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep2
+
+    jal validatedownsidemove
+    
+    #if the piece is on the side, end validation check, else, validatedownmove
+    add $t0, $zero, $zero
+    addi $t0, $zero, 4
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 7
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 7
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 7
+    beq $s1, $t0, endvalidatep2
+    addi $t0, $zero, 1
+    beq $s1, $t0, endvalidatep2
+
+    jal validatedownmove
+
+    endvalidatep2:
     jr $s0
 
-movechkP2:
+validateupmove:
+
+    move $t0, $ra
 
 
-    jr $ra
+    jr $t0
+    
+validateupsidemove:
 
-jumpchkP2:
+    move $t0, $ra
+
+
+    jr $t0
+
+validateupjump:
 
     
     jr $ra
 
+validatedownmove:
+
+    move $t0, $ra
+
+
+    jr $t0
+
+validatedownsidemove:
+
+    move $t0, $ra
+
+
+    jr $t0
+
+validatedownjump:
+
+    jr $ra
+
+setvalid:
+
+    #set valid to 1
+    la $t0, valid
+    addi $t1, $zero, 1
+    sb $t1, ($t0)
+    #if the move is valid, jump all the way back into main
+    jr $s0
 
 updateboard:
 
@@ -182,7 +355,6 @@ victorychk:
 
     endp1check:
 
-    addi $t0, $zero, 32
     add $t1, $zero, $zero
 
     la $t2, b_color

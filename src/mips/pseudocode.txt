@@ -1,3 +1,5 @@
+#this pseudocode is outdate, some processes changed during implementation
+
 #assuming gameboard spaces are 0-indexed
 
 init_board:
