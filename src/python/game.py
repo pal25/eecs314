@@ -3,6 +3,7 @@ import sys, subprocess, select
 
 from constants import *
 from screen import GameScreen
+from checkerpiece import CheckerPiece
 
 spim = subprocess.Popen(['spim', '-file', 'test.s'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -16,7 +17,15 @@ class Game(object):
         self.running = False
         self.exiting = False
         self.player_num = 1
+        self.current_piece = pygame.sprite.GroupSingle()
         self.clock = pygame.time.Clock()
+
+        self.read_spim()
+        self.read_spim()
+        self.read_spim()
+        self.read_spim()
+        self.read_spim()
+        self.read_spim()
 
         while True:
             self.screen = GameScreen(width, height, False)
@@ -76,35 +85,80 @@ class Game(object):
         state = P1_MOVE
 
         while self.running:
-            if state == P1_MOVE:
-                pass
-            
-            elif state == P1_VALIDATE:
-                data = read_spim()
-                if data:
-                    pass
-
-            elif state == P2_MOVE:
-                pass
-            
-            elif state == P2_VALIDATE:
-                data = read_spim()
-                if data:
-                    pass
-
-            for event in pygame.event.get():
+            for event in pygame.event.get([pygame.QUIT, pygame.KEYDOWN]):
                 if event.type == pygame.QUIT:
                     quit_game()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         quit_game()
-                            
+
+            if state == P1_MOVE:
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        pos = pygame.mouse.get_pos()
+                        for sprite in self.screen.p1_group: 
+                            if sprite.rect.collidepoint(pos):
+                                print "Adding p1 sprite to move group"
+                                self.current_piece = sprite#pygame.sprite.GroupSingle(sprite)
+                                state = P1_MOVE_CLICKED
+
+            elif state == P1_MOVE_CLICKED:
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        print "P1 piece placed"
+                        state = P1_VALIDATE
+                        self.current_piece.update(pygame.mouse.get_pos())
+                        self.screen.p1_group.clear(self.screen.screen, self.screen.bg)
+                        self.screen.p1_group.draw(self.screen.screen)
+                        self.screen.p2_group.draw(self.screen.screen)
+                        pygame.display.flip()
+                        
+            elif state == P1_VALIDATE:
+                print "Validating p1 move"
+                state = P2_MOVE
+                data = self.read_spim()
+                if data:
+                    print "Data"
+
+            elif state == P2_MOVE:
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        pos = pygame.mouse.get_pos()
+                        for sprite in self.screen.p2_group: 
+                            if sprite.rect.collidepoint(pos):
+                                print "Adding p2 sprite to move group"
+                                self.current_piece = sprite#pygame.sprite.GroupSingle(sprite)
+                                state = P2_MOVE_CLICKED
+
+            elif state == P2_MOVE_CLICKED:
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        print "P2 piece placed"
+                        state = P2_VALIDATE
+                        self.current_piece.update(pygame.mouse.get_pos())
+                        self.screen.p2_group.clear(self.screen.screen, self.screen.bg)
+                        self.screen.p2_group.draw(self.screen.screen)
+                        self.screen.p1_group.draw(self.screen.screen)
+                        pygame.display.flip()
+
+            elif state == P2_VALIDATE:
+                print "Validating p2 move"
+                state = P1_MOVE
+                data = self.read_spim()
+                if data:
+                    print "Data"
+
             self.clock.tick(FPS)
+
 
 def main():
     pygame.init()
     pygame.display.set_caption('Checkers in MIPS')
-    pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN])
+    pygame.event.set_allowed([pygame.QUIT, 
+                              pygame.KEYDOWN, 
+                              pygame.MOUSEBUTTONUP, 
+                              pygame.MOUSEBUTTONDOWN, 
+                              pygame.MOUSEMOTION])
     
     game = Game()
 
