@@ -10,6 +10,7 @@ b_color .word 0
 b_rank .word 0
 eom .byte 100
 reset .byte 101
+invalidspace .byte 102
 
 .text
 #s0 register helps in return
@@ -24,8 +25,25 @@ main:
     sb $v0, isai
 
     #initboard procedure
-    #!loop through all bits of board registers, set proper bits 
+    #init the "haspiece" datastructure
+    la $t0, b_haspiece
+    addi $t1, $zero, 4293922815
+    sw $t1, ($t0)
+    
+    #init the "color" datastructure
+    la $t0, b_color
+    addi $t1, $zero, 4095
+    sw $t1, ($t0)
+    
+    #init the "rank" datastructure
+    la $t0, b_rank
+    add $t1, $zero, $zero
+    sw $t1, ($t0)
+   
+    li $v0, 
 
+    j endprogram    
+     
     p1:
         #get message for move
         li $v0, 5
@@ -47,6 +65,8 @@ main:
         syscall
         move $s2, $v0
     
+        #!check for invalid space selection
+
         jal validateP1
 
         la $t0, valid
@@ -87,6 +107,8 @@ main:
         lb $t0, ($t0)
         beq $s1, $t0, main
         
+        #!check for invalid space selection
+
         #movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
         li $v0, 5
         syscall
@@ -382,3 +404,6 @@ setvictory:
     sb $a0, ($a1)
 
     jr $ra
+
+#for debugging
+endprogram:
