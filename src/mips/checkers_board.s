@@ -4,13 +4,13 @@ victory: .byte 0
 valid: .byte 0
 jorm: .byte 0
 isai: .byte 0
-b_haspeice .word 0
+b_haspiece: .word 0
 #for color, 0 is p1, 1 is p2
-b_color .word 0
-b_rank .word 0
-eom .byte 100
-reset .byte 101
-invalidspace .byte 102
+b_color: .word 0
+b_rank: .word 0
+eom: .byte 100
+reset: .byte 101
+invalidspace: .byte 102
 
 .text
 #s0 register helps in return
@@ -18,6 +18,7 @@ invalidspace .byte 102
 #s2 register used for "to" space
 #also use t0-t3
 main:
+newgame:
 
     #get bit of AI choice
     li $v0, 5
@@ -26,8 +27,11 @@ main:
 
     #initboard procedure
     #init the "haspiece" datastructure
+    #we only can use 16-bits in immediate instructions
     la $t0, b_haspiece
-    addi $t1, $zero, 4293922815
+    #addi $t1, $zero, 4293922815
+    lui $t1, 0xFFF0
+    addi $t1, $zero, 0x0FFF
     sw $t1, ($t0)
     
     #init the "color" datastructure
@@ -39,8 +43,23 @@ main:
     la $t0, b_rank
     add $t1, $zero, $zero
     sw $t1, ($t0)
-   
-    li $v0, 
+  
+    la $t0, b_haspiece
+    lw $t0, ($t0)
+    la $t3, b_color
+    lw $t3, ($t3)
+    move $t1, $zero
+    addi $t2, $zero, 13
+    li $v0, 1
+    debug1:
+        beq $t1, $t2, enddebug1
+        andi $a0, $t0, 1
+        syscall
+        sra $t0, $t0, 1
+        addi $t1, $t1, 1
+        j debug1
+
+    enddebug1:
 
     j endprogram    
      
@@ -55,10 +74,10 @@ main:
         lb $t0, ($t0)
         beq $s1, $t0, endp1
         
-        #check for reset, jump to main if yes 
+        #check for reset, jump to newgame if yes 
         la $t0, reset
         lb $t0, ($t0)
-        beq $s1, $t0, main
+        beq $s1, $t0, newgame
         
         #movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
         li $v0, 5
@@ -71,7 +90,7 @@ main:
 
         la $t0, valid
         lb $t0, ($t0)
-        bne $to, $zero, validp1
+        bne $t0, $zero, validp1
         #!send "invalid move message" to python
         j p1
 
@@ -102,10 +121,10 @@ main:
         lb $t0, ($t0)
         beq $s1, $t0, endp2
         
-        #check for reset, jump to main if yes 
+        #check for reset, jump to newgame if yes 
         la $t0, reset
         lb $t0, ($t0)
-        beq $s1, $t0, main
+        beq $s1, $t0, newgame
         
         #!check for invalid space selection
 
@@ -118,7 +137,7 @@ main:
 
         la $t0, valid
         lb $t0, ($t0)
-        bne $to, $zero, validp2
+        bne $t0, $zero, validp2
         #!send "invalid move message" to python
         j p2
 
@@ -133,7 +152,7 @@ main:
     beq $t0, $zero, p1
 
     #!send p2 win message to python
-    j main
+    j newgame
 
     ai:
 	
@@ -344,7 +363,7 @@ setvalid:
     la $t0, valid
     addi $t1, $zero, 1
     sb $t1, ($t0)
-    #if the move is valid, jump all the way back into main
+    #if the move is valid, jump all the way back into newgame
     jr $s0
 
 updateboard:
@@ -407,3 +426,6 @@ setvictory:
 
 #for debugging
 endprogram:
+        li $a0, 100
+        li $v0, 1
+        syscall
