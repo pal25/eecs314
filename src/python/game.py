@@ -32,6 +32,7 @@ class Game(object):
 
         while True:
             self.screen = GameScreen(width, height, False)
+            logging.root.info("State: Menu")
             self.menu()
             self.screen = GameScreen(width, height, True)
             self.run()
@@ -77,7 +78,7 @@ class Game(object):
             data = spim.stdout.readline()
             spim.stdout.flush()
             data = data[:-1] # remove newline
-            logging.root.debug("Found Data: %s" % data)
+            logging.root.info("Found Data: %s" % data)
         
         return data
 
@@ -86,6 +87,7 @@ class Game(object):
 
     def run(self):
         state = P1_MOVE
+        logging.root.info("State: P1_MOVE")
 
         while self.running:
             for event in pygame.event.get([pygame.QUIT, pygame.KEYDOWN]):
@@ -104,21 +106,27 @@ class Game(object):
                                 logging.root.debug("Adding p1 sprite to move group")
                                 self.current_piece = sprite
                                 state = P1_MOVE_CLICKED
+                                logging.root.info("State: P1_MOVE_CLICKED")
 
             elif state == P1_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
-                        logging.root.debug("P1 piece placed")
-                        state = P1_VALIDATE
-                        self.current_piece.update(pygame.mouse.get_pos())
+                        valid = self.current_piece.update(pygame.mouse.get_pos())
+                        if valid:
+                            logging.root.debug("P1 piece placed")
+                            repr(self.current_piece)
+                            str(self.current_piece)
+                            state = P1_VALIDATE
+                            logging.root.info("State: P1_VALIDATE")
+
                         self.screen.p1_group.clear(self.screen.screen, self.screen.bg)
                         self.screen.p1_group.draw(self.screen.screen)
                         self.screen.p2_group.draw(self.screen.screen)
                         pygame.display.flip()
                         
             elif state == P1_VALIDATE:
-                logging.root.debug("Validating p1 move")
                 state = P2_MOVE
+                logging.root.info("State: P2_MOVE")
                 data = self.read_spim()
                 if data:
                     print "Data"
@@ -132,21 +140,27 @@ class Game(object):
                                 logging.root.debug("Adding p2 sprite to move group")
                                 self.current_piece = sprite
                                 state = P2_MOVE_CLICKED
+                                logging.root.info("State: P2_MOVE_CLICKED")
 
             elif state == P2_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
-                        logging.root.debug("P2 piece placed")
-                        state = P2_VALIDATE
-                        self.current_piece.update(pygame.mouse.get_pos())
+                        valid = self.current_piece.update(pygame.mouse.get_pos())
+                        if valid:
+                            logging.root.debug("P2 piece placed")
+                            repr(self.current_piece)
+                            str(self.current_piece)
+                            state = P2_VALIDATE
+                            logging.root.info("State: P2_MOVE_VALIDATE")
+
                         self.screen.p2_group.clear(self.screen.screen, self.screen.bg)
                         self.screen.p2_group.draw(self.screen.screen)
                         self.screen.p1_group.draw(self.screen.screen)
                         pygame.display.flip()
 
             elif state == P2_VALIDATE:
-                logging.root.debug("Validating p2 move")
                 state = P1_MOVE
+                logging.root.info("State: P1_MOVE")
                 data = self.read_spim()
                 if data:
                     print "Data"
@@ -169,7 +183,7 @@ def main():
     game = Game()
 
 def quit_game():
-    logging.root.warning("Quitting Game")
+    logging.root.info("Quitting Game")
     sys.exit()
 
 if __name__ == "__main__":
