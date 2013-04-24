@@ -5,20 +5,52 @@ import logging
 from constants import *
 from checker_sprites import CheckerPiece, Button
 
-class GameScreen(object):
-
-    def __init__(self, width=800, height=640, game_board=False):
+class GenericScreen(object):
+    def __init__(self, width=800, height=640):
         self.width = width
         self.height = height
+        self.screen = pygame.display.set_mode((width, height))
+        self.font = pygame.font.SysFont(None, width*height/5000)
+        self.small_font = pygame.font.SysFont(None, width*height/10000)
+        self.bg = pygame.Surface((self.width, self.height))
+        self.bg.fill(WHITE)
+
+    def draw_text(self, text, color1, color2, xpos, ypos):
+        rendering = self.font.render(text, True, color1, color2)
+        self.screen.blit(rendering, (xpos-rendering.get_width()/2, ypos))
+
+    def draw_text_small(self, text, color1, color2, xpos, ypos):
+        rendering = self.small_font.render(text, True, color1, color2)
+        self.screen.blit(rendering, (xpos-rendering.get_width()/2, ypos))
+
+
+class MenuScreen(GenericScreen):
+    def __init__(self, width=800, height=640):
+        GenericScreen.__init__(self, width, height)
+        self.bg = pygame.Surface(pygame.display.get_surface().get_size())
+        self.bg.fill(WHITE)
+        self.screen.blit(self.bg, (0, 0))
+
+        title = "Checkers in MIPS!"
+        self.draw_text(title, BLACK, WHITE, self.width/2, self.height*1/5)
+        self.draw_choices("One Player", "Two Player")
+        pygame.display.flip()
+
+    def draw_choices(self, choice1, choice2):
+        erase_bg = pygame.Surface((self.width, self.height-self.height*3/5))
+        erase_bg.fill(WHITE)
+        self.screen.blit(erase_bg, (0, self.height*3/5))
+        
+        self.draw_text_small(choice1, BLACK, WHITE, self.width/2, self.height*3/5)
+        self.draw_text_small(choice2, BLACK, WHITE, self.width/2, self.height*4/5)
+        
+
+class GameScreen(GenericScreen):
+    def __init__(self, width=800, height=640):
+        GenericScreen.__init__(self, width, height)
 
         self.xwin = self.width/3.05
         self.ywin = self.height
-
-        self.screen = pygame.display.set_mode((width, height))
-
-        self.font = pygame.font.SysFont(None, width*height/5000)
-        self.small_font = pygame.font.SysFont(None, width*height/10000)
-
         self.bg = pygame.Surface((self.width-(self.width/3), self.height))
         self.bg.fill(WHITE)
 
@@ -35,11 +67,10 @@ class GameScreen(object):
         self.p2_group = pygame.sprite.Group()
         self.button_group = pygame.sprite.Group()
 
-        if game_board:
-            self.draw_board()
-            self.draw_pieces(self.state)
-            self.draw_window()
-            pygame.display.flip()
+        self.draw_board()
+        self.draw_pieces(self.state)
+        self.draw_window()
+        pygame.display.flip()
         
     def draw_window(self, turn="Reds Turn"):
         self.win_size = (self.width/3.05, self.height)
@@ -124,24 +155,6 @@ class GameScreen(object):
         self.p2_group.clear(self.screen, self.bg)
         self.p2_group.draw(self.screen)
 
-    def draw_text(self, text, color1, color2, xpos, ypos):
-        rendering = self.font.render(text, True, color1, color2)
-        self.screen.blit(rendering, (xpos-rendering.get_width()/2, ypos))
 
-    def draw_text_small(self, text, color1, color2, xpos, ypos):
-        rendering = self.small_font.render(text, True, color1, color2)
-        self.screen.blit(rendering, (xpos-rendering.get_width()/2, ypos))
-
-    def draw_menu(self, choice1, choice2):
-        menubg = pygame.Surface(pygame.display.get_surface().get_size())
-        menubg.fill(WHITE)
-        self.screen.blit(menubg, (0, 0))
-
-        title = "Checkers in MIPS!"
-        self.draw_text(title, BLACK, WHITE, self.width/2, self.height*1/5)
-        self.draw_text_small(choice1, BLACK, WHITE, self.width/2, self.height*3/5)
-        self.draw_text_small(choice2, BLACK, WHITE, self.width/2, self.height*4/5)
-
-        pygame.display.flip()
     
         

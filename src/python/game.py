@@ -2,7 +2,7 @@ import pygame
 import sys, subprocess, select
 
 from constants import *
-from screen import GameScreen
+from screen import GameScreen, MenuScreen
 from checker_sprites import CheckerPiece
 
 import logging
@@ -31,10 +31,11 @@ class Game(object):
         self.read_spim()
 
         while True:
-            self.screen = GameScreen(width, height, False)
+            self.screen = MenuScreen(width, height)
             logging.root.info("State: Menu")
             self.menu()
-            self.screen = GameScreen(width, height, True)
+
+            self.screen = GameScreen(width, height)
             self.run()
 
     def menu(self):
@@ -63,7 +64,8 @@ class Game(object):
             elif self.player_num == 2:
                 p2 = "[ " + p2 + " ]"
 
-            self.screen.draw_menu(p1, p2)
+            self.screen.draw_choices(p1, p2)
+            pygame.display.flip()
             self.clock.tick(FPS)
 
     def read_spim(self):
