@@ -85,6 +85,45 @@ class Game(object):
     def parse_data(self, data):
         pass
 
+    def check_red_buttons(self, current_state, next_state):
+        state = current_state
+        for sprite in self.screen.button_group:
+            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                logging.root.debug("Button clicked")
+                if sprite.btype == END_OF_TURN:
+                    spim.stdin.write(str(END_OF_TURN) + "\n")
+                    state = next_state
+                    self.screen.draw_window(turn="Blacks Turn")
+                    pygame.display.flip()
+                    logging.root.info("State: P2_MOVE")
+                
+                elif sprite.btype == RESTART:
+                    spim.stdin.write(str(RESTART) + "\n")
+                    Game() #pop a game on the stack
+                    quit_game()
+
+        return state
+
+    def check_black_buttons(self, current_state, next_state):
+        state = current_state
+        for sprite in self.screen.button_group:
+            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                logging.root.debug("Button clicked")
+                if sprite.btype == END_OF_TURN:
+                    spim.stdin.write(str(END_OF_TURN) + "\n")
+                    self.screen.draw_window(turn="Reds Turn")
+                    pygame.display.flip()
+                    state = next_state
+                    logging.root.info("State: P1_MOVE")
+                
+                elif sprite.btype == RESTART:
+                    spim.stdin.write(str(RESTART) + "\n")
+                    Game() #pop a game on the stack
+                    quit_game()
+
+        return state
+        
+        
     def run(self):
         state = P1_MOVE
         state_changed = True
@@ -108,6 +147,7 @@ class Game(object):
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
                         pos = pygame.mouse.get_pos()
+                        state = self.check_red_buttons(P1_MOVE, P2_MOVE)
                         for sprite in self.screen.p1_group: 
                             if sprite.rect.collidepoint(pos):
                                 logging.root.debug("Adding p1 sprite to move group")
@@ -115,20 +155,6 @@ class Game(object):
                                 state = P1_MOVE_CLICKED
                                 logging.root.info("State: P1_MOVE_CLICKED")
                         
-                        for sprite in self.screen.button_group:
-                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                                logging.root.debug("Button clicked")
-                                if sprite.btype == END_OF_TURN:
-                                    spim.stdin.write(str(END_OF_TURN) + "\n")
-                                    state = P2_MOVE
-                                    self.screen.draw_window(turn="Blacks Turn")
-                                    pygame.display.flip()
-                                    logging.root.info("State: P2_MOVE")
-                                if sprite.btype == RESTART:
-                                    spim.stdin.write(str(RESTART) + "\n")
-                                    Game() #pop a game on the stack
-                                    quit_game()
-
             elif state == P1_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
@@ -141,19 +167,9 @@ class Game(object):
                             self.screen.p1_group.draw(self.screen.screen)
                             self.screen.p2_group.draw(self.screen.screen)
                             pygame.display.flip()
-                        for sprite in self.screen.button_group:
-                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                                logging.root.debug("Button clicked")
-                                if sprite.btype == END_OF_TURN:
-                                    spim.stdin.write(str(END_OF_TURN) + "\n")
-                                    self.screen.draw_window(turn="Blacks Turn")
-                                    pygame.display.flip()
-                                    state = P2_MOVE
-                                    logging.root.info("State: P2_MOVE")
-                                if sprite.btype == RESTART:
-                                    spim.stdin.write(str(RESTART) + "\n")
-                                    Game() #pop a game on the stack
-                                    quit_game()
+
+                        else:
+                            state = self.check_red_buttons(P1_MOVE_CLICKED, P2_MOVE)
                         
             elif state == P1_VALIDATE:
                 spim.stdin.write(repr(self.current_piece) + "\n")
@@ -168,27 +184,14 @@ class Game(object):
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
                         pos = pygame.mouse.get_pos()
+                        state = self.check_black_buttons(P2_MOVE, P1_MOVE)
                         for sprite in self.screen.p2_group: 
                             if sprite.rect.collidepoint(pos):
                                 logging.root.debug("Adding p2 sprite to move group")
                                 self.current_piece = sprite
                                 state = P2_MOVE_CLICKED
                                 logging.root.info("State: P2_MOVE_CLICKED")
-
-                        for sprite in self.screen.button_group:
-                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                                logging.root.debug("Button clicked")
-                                if sprite.btype == END_OF_TURN:
-                                    spim.stdin.write(str(END_OF_TURN) + "\n")
-                                    self.screen.draw_window(turn="Reds Turn")
-                                    pygame.display.flip()
-                                    state = P1_MOVE
-                                    logging.root.info("State: P1_MOVE")
-                                if sprite.btype == RESTART:
-                                    spim.stdin.write(str(RESTART) + "\n")
-                                    Game() #pop a game on the stack
-                                    quit_game()
-
+                        
             elif state == P2_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
@@ -201,21 +204,9 @@ class Game(object):
                             self.screen.p2_group.draw(self.screen.screen)
                             self.screen.p1_group.draw(self.screen.screen)
                             pygame.display.flip()
-
-                        for sprite in self.screen.button_group:
-                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                                logging.root.debug("Button clicked")
-                                if sprite.btype == END_OF_TURN:
-                                    spim.stdin.write(str(END_OF_TURN) + "\n")
-                                    self.screen.draw_window(turn="Reds Turn")
-                                    pygame.display.flip()
-                                    state = P1_MOVE
-                                    logging.root.info("State: P1_MOVE")
-                                if sprite.btype == RESTART:
-                                    spim.stdin.write(str(RESTART) + "\n")
-                                    Game() #pop a game on the stack
-                                    quit_game()
-
+                        
+                        else:
+                            state = self.check_black_buttons(P2_MOVE_CLICKED, P1_MOVE)
 
             elif state == P2_VALIDATE:
                 spim.stdin.write(repr(self.current_piece) + "\n")
