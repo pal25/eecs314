@@ -17,8 +17,8 @@ reset: .byte 101
 invalidspace: .byte 102
 
 #output codes
-invalidmove: .byte 110
-validmove: .byte 111
+invalidmove: .byte 110 # Depreciated
+validmove: .byte 111 # Board move
 p1wins: .byte 112
 p2wins: .byte 113
 newline: .asciiz "\n"
@@ -525,8 +525,52 @@ setvictory:
 
 	jr $ra
 
-outputboard:
+outputboard: 			# Responsible for printing out the board to Python
+	addi $t0, $zero, $zero 	# Bit position and counter
+	addi $t1, $zero, 32 	# End value
+	
+	lw $t2, 0(b_haspiece) 	#has piece
+	lw $t3, 0(b_color) 	#color
+	lw $t4, 0(b_rank) 	#rank
+	
+        outputloop: 		# Loop for outputboard
+	add $t5, $zero, $zero 	# Initialize t5 to 0
 
+	# Print the valid move header
+	li $a0, validmove
+	addi $v0, $zero, 1
+	syscall
+	syscall
+
+	# Shift t0-th value from t2 into t5
+	sllv $t5, $t2, $t0
+	ori $t5, $t5, 1
+	sll $t5, $t5, 1
+
+	# Shift t0-th value from t3 into t5
+	sllv $t5, $t3, $t0
+	ori $t5, $t5, 1
+	sll $t5, $t5, 1
+
+	# Shift t0-th value from t4 into t5
+	sllv $t5, $t4, $t0
+	ori $t5, $t5, 1
+
+	# Print the three-tuple on range [000...111]
+	move $a0, $t5
+	addi $v0, $zero, 1
+	syscall
+
+	# Increment counter and loop
+	addi $t0, $t0, 1
+	bne $t0, $t1, outputloop
+
+	# After loop print newline
+	la $a0, newline
+	addi $v0, 5
+	syscall
+
+	# Return to code
         jr $ra
 
 #for debugging
