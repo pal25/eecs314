@@ -2,6 +2,8 @@ import pygame
 import logging
 import string
 
+from utils import OutOfBoundsError
+
 class Button(pygame.sprite.Sprite):
     def __init__(self, screen, btype, pos, text, color1, color2):
         pygame.sprite.Sprite.__init__(self)
@@ -26,9 +28,6 @@ class CheckerPiece(pygame.sprite.Sprite):
         self.image = pygame.Surface(self.size)
         self.image.fill((100, 100, 100))
         self.image.set_colorkey((100, 100, 100))
-        
-        self.kinged = False
-
         self.xpos = xpos
         self.ypos = ypos
 
@@ -36,6 +35,8 @@ class CheckerPiece(pygame.sprite.Sprite):
             radius = width/2
         else:
             radius = height/2
+
+        self.kinged = False
 
         self.shape = pygame.draw.circle(self.image, color, (width/2, height/2), radius, 0)
         self.rect = self.image.get_rect()
@@ -64,14 +65,15 @@ class CheckerPiece(pygame.sprite.Sprite):
 
     def update(self,pos=None):
         if pos is None:
-            self.rect.center = (self.xpos, self.ypos)
-        else:
+            pos = (self.xpos, self.ypos)
+        
+        try:
             new_center = self.determine_physical_pos(pos)
-            if new_center is not None:
-                self.rect.center = new_center
-                return True
-            else:
-                return False
+            self.rect.center = new_center
+            return True
+        except OutOfBoundsError: 
+            logging.root.warning("Error with placement position")
+            return False
 
     def get_tile_num(self, pos):
         (xpos, ypos) = pos
@@ -97,9 +99,12 @@ class CheckerPiece(pygame.sprite.Sprite):
         xpos = pos[0]
         ypos = pos[1]
         
-        if(xpos >= width-width/3.05 or valid_board[board_space] == 0):
-            logging.root.warning("Error with placement position")
-            return None
+        if(xpos >= width-width/3.05):
+            logging.root.warning("Piece out of bounds of board")
+            raise OutOfBoundsError
+        elif(valid_board[board_space] == 0):
+            logging.root.warning("Piece not on correct color tile")
+            raise OutOfBoundsError
 
         sq_xpos = (xpos // self.size[0]) * self.size[0]
         sq_ypos = (ypos // self.size[1]) * self.size[1]

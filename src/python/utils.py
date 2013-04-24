@@ -1,6 +1,9 @@
 import pygame
 import os.path
 
+class OutOfBoundsError(Exception):
+    pass
+
 def load_image(filename):
     filename = os.path.join('images', filename)
     try:
