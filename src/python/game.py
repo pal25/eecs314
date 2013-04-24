@@ -3,7 +3,7 @@ import sys, subprocess, select
 
 from constants import *
 from screen import GameScreen
-from checkerpiece import CheckerPiece
+from checker_sprites import CheckerPiece
 
 import logging
 import logging.config
@@ -87,6 +87,7 @@ class Game(object):
 
     def run(self):
         state = P1_MOVE
+        state_changed = True
         logging.root.info("State: P1_MOVE")
 
         while self.running:
@@ -96,6 +97,12 @@ class Game(object):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         quit_game()
+
+            if state_changed:
+                self.screen.draw_board()
+                self.screen.draw_pieces(self.screen.state)
+                pygame.display.flip()
+                state_changed = False
 
             if state == P1_MOVE:
                 for event in pygame.event.get():
@@ -107,30 +114,56 @@ class Game(object):
                                 self.current_piece = sprite
                                 state = P1_MOVE_CLICKED
                                 logging.root.info("State: P1_MOVE_CLICKED")
+                        
+                        for sprite in self.screen.button_group:
+                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                                logging.root.debug("Button clicked")
+                                if sprite.btype == END_OF_TURN:
+                                    spim.stdin.write(str(END_OF_TURN) + "\n")
+                                    state = P2_MOVE
+                                    self.screen.draw_window(turn="Blacks Turn")
+                                    pygame.display.flip()
+                                    logging.root.info("State: P2_MOVE")
+                                if sprite.btype == RESTART:
+                                    spim.stdin.write(str(RESTART) + "\n")
+                                    Game() #pop a game on the stack
+                                    quit_game()
 
             elif state == P1_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
-                        valid = self.current_piece.update(pygame.mouse.get_pos())
-                        if valid:
+                        if self.current_piece.update(pygame.mouse.get_pos()):
                             logging.root.debug("P1 piece placed")
-                            repr(self.current_piece)
-                            str(self.current_piece)
                             state = P1_VALIDATE
                             logging.root.info("State: P1_VALIDATE")
 
-                        self.screen.p1_group.clear(self.screen.screen, self.screen.bg)
-                        self.screen.p1_group.draw(self.screen.screen)
-                        self.screen.p2_group.draw(self.screen.screen)
-                        pygame.display.flip()
+                            self.screen.p1_group.clear(self.screen.screen, self.screen.bg)
+                            self.screen.p1_group.draw(self.screen.screen)
+                            self.screen.p2_group.draw(self.screen.screen)
+                            pygame.display.flip()
+                        for sprite in self.screen.button_group:
+                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                                logging.root.debug("Button clicked")
+                                if sprite.btype == END_OF_TURN:
+                                    spim.stdin.write(str(END_OF_TURN) + "\n")
+                                    self.screen.draw_window(turn="Blacks Turn")
+                                    pygame.display.flip()
+                                    state = P2_MOVE
+                                    logging.root.info("State: P2_MOVE")
+                                if sprite.btype == RESTART:
+                                    spim.stdin.write(str(RESTART) + "\n")
+                                    Game() #pop a game on the stack
+                                    quit_game()
                         
             elif state == P1_VALIDATE:
-                state = P2_MOVE
-                logging.root.info("State: P2_MOVE")
+                spim.stdin.write(repr(self.current_piece) + "\n")
+
                 data = self.read_spim()
                 if data:
-                    print "Data"
-
+                    state = P1_MOVE
+                    state_changed = True
+                    logging.root.info("State: P1_MOVE")
+                    
             elif state == P2_MOVE:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
@@ -142,28 +175,56 @@ class Game(object):
                                 state = P2_MOVE_CLICKED
                                 logging.root.info("State: P2_MOVE_CLICKED")
 
+                        for sprite in self.screen.button_group:
+                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                                logging.root.debug("Button clicked")
+                                if sprite.btype == END_OF_TURN:
+                                    spim.stdin.write(str(END_OF_TURN) + "\n")
+                                    self.screen.draw_window(turn="Reds Turn")
+                                    pygame.display.flip()
+                                    state = P1_MOVE
+                                    logging.root.info("State: P1_MOVE")
+                                if sprite.btype == RESTART:
+                                    spim.stdin.write(str(RESTART) + "\n")
+                                    Game() #pop a game on the stack
+                                    quit_game()
+
             elif state == P2_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
-                        valid = self.current_piece.update(pygame.mouse.get_pos())
-                        if valid:
+                        if self.current_piece.update(pygame.mouse.get_pos()):
                             logging.root.debug("P2 piece placed")
-                            repr(self.current_piece)
-                            str(self.current_piece)
                             state = P2_VALIDATE
-                            logging.root.info("State: P2_MOVE_VALIDATE")
+                            logging.root.info("State: P2_VALIDATE")
 
-                        self.screen.p2_group.clear(self.screen.screen, self.screen.bg)
-                        self.screen.p2_group.draw(self.screen.screen)
-                        self.screen.p1_group.draw(self.screen.screen)
-                        pygame.display.flip()
+                            self.screen.p2_group.clear(self.screen.screen, self.screen.bg)
+                            self.screen.p2_group.draw(self.screen.screen)
+                            self.screen.p1_group.draw(self.screen.screen)
+                            pygame.display.flip()
+
+                        for sprite in self.screen.button_group:
+                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                                logging.root.debug("Button clicked")
+                                if sprite.btype == END_OF_TURN:
+                                    spim.stdin.write(str(END_OF_TURN) + "\n")
+                                    self.screen.draw_window(turn="Reds Turn")
+                                    pygame.display.flip()
+                                    state = P1_MOVE
+                                    logging.root.info("State: P1_MOVE")
+                                if sprite.btype == RESTART:
+                                    spim.stdin.write(str(RESTART) + "\n")
+                                    Game() #pop a game on the stack
+                                    quit_game()
+
 
             elif state == P2_VALIDATE:
-                state = P1_MOVE
-                logging.root.info("State: P1_MOVE")
+                spim.stdin.write(repr(self.current_piece) + "\n")
+
                 data = self.read_spim()
                 if data:
-                    print "Data"
+                    state = P2_MOVE
+                    state_changed = True
+                    logging.root.info("State: P2_MOVE")
 
             self.clock.tick(FPS)
 
@@ -180,10 +241,21 @@ def main():
                               pygame.MOUSEBUTTONDOWN, 
                               pygame.MOUSEMOTION])
     
-    game = Game()
-
+    try:
+        game = Game()
+    except SystemExit:
+        pass
+    except:
+        logging.root.error("Checkers encountered an error")
+        logging.root.info("Quitting Game")
+        spim.kill()
+        pygame.display.quit()
+        raise
+        
 def quit_game():
     logging.root.info("Quitting Game")
+    spim.kill()
+    pygame.display.quit()
     sys.exit()
 
 if __name__ == "__main__":

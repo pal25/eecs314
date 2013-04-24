@@ -2,6 +2,23 @@ import pygame
 import logging
 import string
 
+class Button(pygame.sprite.Sprite):
+    def __init__(self, screen, btype, pos, text, color1, color2):
+        pygame.sprite.Sprite.__init__(self)
+        self.btype = btype
+        (self.xpos, self.ypos) = pos
+
+        rendering = screen.small_font.render(text, True, color1, color2)
+        self.image = pygame.Surface(rendering.get_size())
+        self.rect = self.image.get_rect()
+
+        self.image.fill((100, 100, 100))
+        self.image.set_colorkey((100, 100, 100))
+        self.image.blit(rendering, (0, 0))
+
+    def update(self):
+        self.rect.center = (self.xpos, self.ypos)
+        
 class CheckerPiece(pygame.sprite.Sprite):
     def __init__(self, width, height, xpos, ypos, color):
         pygame.sprite.Sprite.__init__(self)
@@ -45,7 +62,7 @@ class CheckerPiece(pygame.sprite.Sprite):
         logging.root.debug("Human Repr: %s" % str_pos)
         return str_pos
 
-    def update(self, pos=None):
+    def update(self,pos=None):
         if pos is None:
             self.rect.center = (self.xpos, self.ypos)
         else:
@@ -65,40 +82,28 @@ class CheckerPiece(pygame.sprite.Sprite):
         return board_space
 
     def determine_physical_pos(self, pos):
+        valid_board = [0, 1, 0, 1, 0, 1, 0, 1,
+                       1, 0, 1, 0, 1, 0, 1, 0,
+                       0, 1, 0, 1, 0, 1, 0, 1,
+                       1, 0, 1, 0, 1, 0, 1, 0,
+                       0, 1, 0, 1, 0, 1, 0, 1,
+                       1, 0, 1, 0, 1, 0, 1, 0,
+                       0, 1, 0, 1, 0, 1, 0, 1,
+                       1, 0, 1, 0, 1, 0, 1, 0]
+
+        board_space = self.get_tile_num(pos)
+
         (width, height) = pygame.display.get_surface().get_size()
-        board_space = self.get_tile_num((self.xpos, self.ypos))
-
-        even = None
-        if int(board_space) % 2 == 0:
-            even = True
-            logging.root.debug("Even previous position: %d" % board_space)
-        else:
-            even = False
-            logging.root.debug("Odd previous position: %d" % board_space)
-
         xpos = pos[0]
         ypos = pos[1]
         
-        if(xpos >= width-width/3.05):
+        if(xpos >= width-width/3.05 or valid_board[board_space] == 0):
             logging.root.warning("Error with placement position")
             return None
 
         sq_xpos = (xpos // self.size[0]) * self.size[0]
         sq_ypos = (ypos // self.size[1]) * self.size[1]
-        xpos = sq_xpos + self.size[0]/2
-        ypos = sq_ypos + self.size[1]/2
-        
-        board_space = self.get_tile_num((xpos, ypos))
-        if (int(board_space) % 2 == 0) and not even:
-            self.xpos = xpos
-            self.ypos = ypos
-            logging.root.debug("Even current position: %d" % board_space)
-            return (self.xpos, self.ypos)
-        elif (int(board_space) % 2 != 0) and even:
-            self.xpos = xpos
-            self.ypos = ypos
-            logging.root.debug("Odd current position: %d" % board_space)
-            return (self.xpos, self.ypos)
-        else:
-            logging.root.debug("Invalid placement")
-            return None
+        self.xpos = sq_xpos + self.size[0]/2
+        self.ypos = sq_ypos + self.size[1]/2
+        return (self.xpos, self.ypos)
+

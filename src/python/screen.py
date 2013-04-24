@@ -3,7 +3,7 @@ import os.path
 import logging
 
 from constants import *
-from checkerpiece import CheckerPiece
+from checker_sprites import CheckerPiece, Button
 
 class GameScreen(object):
 
@@ -19,7 +19,7 @@ class GameScreen(object):
         self.font = pygame.font.SysFont(None, width*height/5000)
         self.small_font = pygame.font.SysFont(None, width*height/10000)
 
-        self.bg = pygame.Surface(self.screen.get_size())
+        self.bg = pygame.Surface((self.width-(self.width/3), self.height))
         self.bg.fill(WHITE)
 
         self.state = [1, 0, 1, 0, 1, 0, 1, 0,
@@ -33,30 +33,35 @@ class GameScreen(object):
 
         self.p1_group = pygame.sprite.Group()
         self.p2_group = pygame.sprite.Group()
+        self.button_group = pygame.sprite.Group()
 
         if game_board:
+            self.draw_board()
             self.draw_pieces(self.state)
             self.draw_window()
+            pygame.display.flip()
         
-    def draw_window(self, moves=[]):
+    def draw_window(self, turn="Reds Turn"):
+        self.win_size = (self.width/3.05, self.height)
+        self.win_pos = (self.width-self.width/3.05, 0)
+        self.win_center_width = self.width-(self.width/3.05)/2
+
         winbg = pygame.Surface((self.width/3.05, self.height))
         winbg.fill(WHITE)
         self.screen.blit(winbg, (self.width-self.width/3.05, 0))
         logging.root.debug("Adding side window at (%d, %d)" % (self.width-self.width/3.05, 0))
 
-        self.draw_text_small("Choosen Moves", BLACK, WHITE, self.width-(self.width/3.05)/2, self.height*1/20)
+        self.draw_text_small(turn, BLACK, WHITE, self.width-(self.width/3.05)/2, self.height*1/20)
 
-        height = self.height*2/20
-        for move in moves:
-            string = "Move: %s" % determine_move(move)
-            self.draw_text_small(string, BLACK, WHITE, self.width-(self.width/3.05)/2, height)
+        pos = (self.win_center_width, self.height*15/20)
+        self.button_group.add(Button(self, RESTART, pos, "Restart", WHITE, BLACK))
+        pos = (self.win_center_width, self.height*18/20)
+        self.button_group.add(Button(self, END_OF_TURN, pos, "End Turn", WHITE, BLACK))
 
-        pygame.display.flip()
+        self.button_group.update()
+        self.button_group.draw(self.screen)
 
-    def determine_move(xpos, ypos):
-        return "None"
-
-    def draw_pieces(self, state):
+    def draw_board(self):
         self.bg.fill(BLACK)
         x_size = (self.width-(self.width/3))/8
         y_size = self.height/8
@@ -73,6 +78,32 @@ class GameScreen(object):
                     
                 pygame.draw.rect(self.bg, color, ((xpos, ypos), (x_size, y_size)))
 
+                xpos += x_size
+                tile = tile + 1
+                    
+            tile = tile+1 % 2
+            xpos = 0
+            ypos += y_size
+
+        self.screen.blit(self.bg, (0, 0))  
+
+    def draw_pieces(self, state):
+        x_size = (self.width-(self.width/3))/8
+        y_size = self.height/8
+        xpos = 0
+        ypos = 0
+        tile = 0
+
+        self.p1_group = pygame.sprite.Group()
+        self.p2_group = pygame.sprite.Group()
+        
+        for row in range(0,8):
+            for column in range(0,8):
+                if tile % 2 == 0:
+                    color = DIRTY_RED
+                else:
+                    color = WHITE
+                    
                 if state[row*8+column] == 1:
                     self.p1_group.add(CheckerPiece(x_size, y_size, xpos+x_size/2, ypos+y_size/2, RED))
                 elif state[row*8+column] == 2:
@@ -85,15 +116,13 @@ class GameScreen(object):
             xpos = 0
             ypos += y_size
 
-        self.screen.blit(self.bg, (0, 0))  
-
         self.p1_group.update()
+        self.p1_group.clear(self.screen, self.bg)
         self.p1_group.draw(self.screen)
 
         self.p2_group.update()
+        self.p2_group.clear(self.screen, self.bg)
         self.p2_group.draw(self.screen)
-
-        pygame.display.flip()
 
     def draw_text(self, text, color1, color2, xpos, ypos):
         rendering = self.font.render(text, True, color1, color2)
@@ -104,7 +133,9 @@ class GameScreen(object):
         self.screen.blit(rendering, (xpos-rendering.get_width()/2, ypos))
 
     def draw_menu(self, choice1, choice2):
-        self.screen.blit(self.bg, (0, 0))
+        menubg = pygame.Surface(pygame.display.get_surface().get_size())
+        menubg.fill(WHITE)
+        self.screen.blit(menubg, (0, 0))
 
         title = "Checkers in MIPS!"
         self.draw_text(title, BLACK, WHITE, self.width/2, self.height*1/5)
