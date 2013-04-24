@@ -16,8 +16,11 @@ eom: .byte 100
 reset: .byte 101
 invalidspace: .byte 102
 
-#output codes (errors)
-invalidmove: .byte 200
+#output codes
+invalidmove: .byte 110
+validmove: .byte 111
+p1wins: .byte 112
+p2wins: .byte 113
 newline: .asciiz "\n"
 
 .text
@@ -85,8 +88,8 @@ newgame:
         lb $a0, ($t0)
         syscall
         li $v0, 4
-        la $t0, newline
-        lw $a0, ($t0)
+        la $a0, newline
+        syscall
         j p1
 
         validp1:
@@ -94,18 +97,27 @@ newgame:
 
     endp1:
     jal victorychk
+    #if there is no victory, go to p2
     la $t0, victory
     lb $t0, ($t0)
-    beq $t0, $zero, p1
+    beq $t0, $zero, p2
 
-    #!send p1 win message to python
-
-    #if AI enabled, jump to AI
-    la $t0, isai
-    lb $t0, ($t0)
-    bne $zero, $t0, ai
+    #if there is victory, p1 wins! Send back victory code, reset game
+    la $t0, p1wins
+    lb $a0, ($t0)
+    li $v0, 1
+    syscall
+    la $a0, newline
+    li $v0, 4
+    syscall
+    j newgame
 
     p2:
+        #if AI enabled (not equal to 0), jump to AI
+        la $t0, isai
+        lb $t0, ($t0)
+        bne $zero, $t0, ai
+
         #get message for move
         li $v0, 5
         syscall
@@ -121,8 +133,6 @@ newgame:
         lb $t0, ($t0)
         beq $s1, $t0, newgame
         
-        #!check for invalid space selection
-
         #movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
         li $v0, 5
         syscall
@@ -139,8 +149,8 @@ newgame:
         lb $a0, ($t0)
         syscall
         li $v0, 4
-        la $t0, newline
-        lw $a0, ($t0)
+        la $a0, newline
+        syscall
         j p2
 
         validp2:
@@ -148,18 +158,42 @@ newgame:
         jal update_board
         
 	endp2:
+
     jal victorychk
+    #if there is no victory, go back to p1 turn
     la $t0, victory
     lb $t0, ($t0)
     beq $t0, $zero, p1
-
-    #!send p2 win message to python
+   
+    #if there is victory, p2 wins! sent message, start new game
+    la $t0, p2wins
+    lb $a0, ($t0)
+    li $v0, 1
+    syscall
+    la $a0, newline
+    li $v0, 4
+    syscall
     j newgame
 
     ai:
 	
     endai:
-	j p1
+    
+    jal victorychk
+    #if there is no victory, go back to p1 turn
+    la $t0, victory
+    lb $t0, ($t0)
+    beq $t0, $zero, p1
+   
+    #if there is victory, p2 wins! sent message, start new game
+    la $t0, p2wins
+    lb $a0, ($t0)
+    li $v0, 1
+    syscall
+    la $a0, newline
+    li $v0, 4
+    syscall
+    j newgame
 
 validatep1:
 
@@ -215,6 +249,9 @@ validatep1:
     #shift the array of pieces to the right, so that the "from" space bit is in the LSB position
     srlv $t0, $t0, $s1
     andi $t0, $t0, 1
+    
+    #if the piece isn't a king, skip the king validation
+    beq $t0, $zero, endvalidatep1
     
     #if the piece is on the top of the board, it can't move up
     add $t0, $zero, $zero
@@ -306,6 +343,9 @@ validatep2:
     #shift the array of pieces to the right, so that the "from" space bit is in the LSB position
     srlv $t0, $t0, $s1
     andi $t0, $t0, 1
+
+    #if the piece isn't a king, skip the king validation
+    beq $t0, $zero, endvalidatep2
     
     #if the piece is on the botton of the board, it can't move down
     add $t0, $zero, $zero
@@ -343,14 +383,20 @@ validatep2:
 
 validateupmove:
 
-    move $t0, $ra
+    #only needs to handle the 5 shift
+    move $t3, $ra
+
+    #if the space moving to is occupied, the movement is invalid, jump all the way back to the call in main
+    #get occupancy of space from b_haspiece
 
 
+    endvalidateupmove:
     jr $t0
     
 validateupsidemove:
 
-    move $t0, $ra
+    #only needs to handle the 4 shift
+    move $t3, $ra
 
 
     jr $t0
@@ -362,14 +408,16 @@ validateupjump:
 
 validatedownmove:
 
-    move $t0, $ra
+    #only needs to handle the 5 shift
+    move $t3, $ra
 
 
     jr $t0
 
 validatedownsidemove:
 
-    move $t0, $ra
+    #only needs to handle the 4 shift
+    move $t3, $ra
 
 
     jr $t0
