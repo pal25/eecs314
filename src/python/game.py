@@ -49,6 +49,7 @@ class Game(object):
                         self.player_num = 2
                     elif event.key == pygame.K_RETURN:
                         logging.root.debug("Chosing Return Value")
+                        spim.stdin.write(str(self.player_num) + "\n") #Determines AI/P2
                         self.running = True
                     elif event.key == pygame.K_ESCAPE:
                         quit_game()
@@ -92,10 +93,24 @@ class Game(object):
                 logging.root.debug("Button clicked")
                 if sprite.btype == END_OF_TURN:
                     spim.stdin.write(str(END_OF_TURN) + "\n")
-                    state = next_state
-                    self.screen.draw_window(turn="Blacks Turn")
-                    pygame.display.flip()
-                    logging.root.info("State: P2_MOVE")
+                    if self.player_num == 2:
+                        state = next_state
+                        self.screen.draw_window(turn="Blacks Turn")
+                        pygame.display.flip()
+                        logging.root.info("State: P2_MOVE")
+                    else:
+                        self.screen.draw_window(turn="Waiting for AI...")
+                        pygame.display.flip()
+
+                        data = None
+                        while data is None:
+                            data = self.read_spim()
+
+                        #self.screen.state = self.parse_data(data)
+                        state_changed = True
+                        self.screen.draw_window(turn="Reds Turn")
+                        pygame.display.flip()
+                        state = P1_MOVE
                 
                 elif sprite.btype == RESTART:
                     spim.stdin.write(str(RESTART) + "\n")
