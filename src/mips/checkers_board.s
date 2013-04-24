@@ -1,16 +1,24 @@
 .data
-newline: .asciiz "\n"
+#internal variables
 victory: .byte 0
 valid: .byte 0
 jorm: .byte 0
 isai: .byte 0
-b_haspiece: .word 0
+
+#data structure for gameboard
 #for color, 0 is p1, 1 is p2
+b_haspiece: .word 0
 b_color: .word 0
 b_rank: .word 0
+
+#input codes
 eom: .byte 100
 reset: .byte 101
 invalidspace: .byte 102
+
+#output codes (errors)
+invalidmove: .byte 200
+newline: .asciiz "\n"
 
 .text
 #s0 register helps in return
@@ -29,9 +37,9 @@ newgame:
     #init the "haspiece" datastructure
     #we only can use 16-bits in immediate instructions
     la $t0, b_haspiece
-    #addi $t1, $zero, 4293922815
-    lui $t1, 0xFFF0
-    addi $t1, $zero, 0x0FFF
+    addi $t1, 4095 
+    sll $t1, $t1, 20
+    ori $t1, $t1, 4095
     sw $t1, ($t0)
     
     #init the "color" datastructure
@@ -44,25 +52,6 @@ newgame:
     add $t1, $zero, $zero
     sw $t1, ($t0)
   
-    la $t0, b_haspiece
-    lw $t0, ($t0)
-    la $t3, b_color
-    lw $t3, ($t3)
-    move $t1, $zero
-    addi $t2, $zero, 13
-    li $v0, 1
-    debug1:
-        beq $t1, $t2, enddebug1
-        andi $a0, $t0, 1
-        syscall
-        sra $t0, $t0, 1
-        addi $t1, $t1, 1
-        j debug1
-
-    enddebug1:
-
-    j endprogram    
-     
     p1:
         #get message for move
         li $v0, 5
@@ -83,15 +72,21 @@ newgame:
         li $v0, 5
         syscall
         move $s2, $v0
-    
-        #!check for invalid space selection
-
-        jal validateP1
+   
+        #validate the move 
+        jal validatep1
 
         la $t0, valid
         lb $t0, ($t0)
         bne $t0, $zero, validp1
-        #!send "invalid move message" to python
+        #send "invalid move message" to python
+        li $v0, 1
+        la $t0, invalidmove
+        lb $a0, ($t0)
+        syscall
+        li $v0, 4
+        la $t0, newline
+        lw $a0, ($t0)
         j p1
 
         validp1:
@@ -138,7 +133,14 @@ newgame:
         la $t0, valid
         lb $t0, ($t0)
         bne $t0, $zero, validp2
-        #!send "invalid move message" to python
+        #send "invalid move message" to python
+        li $v0, 1
+        la $t0, invalidmove
+        lb $a0, ($t0)
+        syscall
+        li $v0, 4
+        la $t0, newline
+        lw $a0, ($t0)
         j p2
 
         validp2:
@@ -159,7 +161,7 @@ newgame:
     endai:
 	j p1
 
-validateP1:
+validatep1:
 
     #move return address to s0 to allow jal calls in this function
     move $s0, $ra
@@ -167,6 +169,11 @@ validateP1:
     #default valid to 0
     la $t0, valid
     sb $zero, ($t0)
+
+    #if the "to" space is coded as invalid, don't allow a move to it
+    la $t0, invalidspace
+    lb $t0, ($t0)
+    beq $s2, $t0, endvalidatep1 
     
     #if the piece is on the botton of the board, it can't move down
     add $t0, $zero, $zero
@@ -202,8 +209,12 @@ validateP1:
     #if a pawn move isn't valid, see if a king move is
     kingmovep1:
 
-    #!see if the piece's square has a king, store in t0
-    
+    #see if the "from" space has a king, store in t0
+    la $t0, b_rank
+    lw $t0, ($t0)
+    #shift the array of pieces to the right, so that the "from" space bit is in the LSB position
+    srlv $t0, $t0, $s1
+    andi $t0, $t0, 1
     
     #if the piece is on the top of the board, it can't move up
     add $t0, $zero, $zero
@@ -249,6 +260,11 @@ validatep2:
     la $t0, valid
     sb $zero, ($t0)
     
+    #if the "to" space is coded as invalid, don't allow a move to it
+    la $t0, invalidspace
+    lb $t0, ($t0)
+    beq $s2, $t0, endvalidatep2 
+    
     #if the piece is on the top of the board, it can't move up
     add $t0, $zero, $zero
     addi $t0, $zero, 28
@@ -284,7 +300,12 @@ validatep2:
     #if a pawn move isn't valid, see if a king move is
     kingmovep2:
 
-    #!see if the piece's square has a king, store in t0
+    #see if the piece's square has a king, store in t0
+    la $t0, b_rank
+    lw $t0, ($t0)
+    #shift the array of pieces to the right, so that the "from" space bit is in the LSB position
+    srlv $t0, $t0, $s1
+    andi $t0, $t0, 1
     
     #if the piece is on the botton of the board, it can't move down
     add $t0, $zero, $zero
@@ -426,6 +447,8 @@ setvictory:
 
 #for debugging
 endprogram:
-        li $a0, 100
+        li $a0, 9
         li $v0, 1
+        syscall
+        li $v0, 10
         syscall
