@@ -51,7 +51,7 @@ class Game(object):
             data = spim.stdout.readline()
             spim.stdout.flush()
             data = data[:-1] # remove newline
-            logging.root.info("Found Data: %s" % data)
+            logging.root.debug("Found Data: %s" % data)
         
         return data
 
@@ -123,7 +123,7 @@ class Game(object):
                                 if sprite.btype == END_OF_TURN:
                                     spim.stdin.write(str(END_OF_TURN) + "\n")
                                     if self.player_num == 2:
-                                        state = next_state
+                                        state = P2_MOVE
                                         self.screen.draw_window(turn="Blacks Turn")
                                         pygame.display.flip()
                                         logging.root.info("State: P2_MOVE")
