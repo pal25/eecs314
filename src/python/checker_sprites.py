@@ -30,6 +30,8 @@ class CheckerPiece(pygame.sprite.Sprite):
         self.image.set_colorkey((100, 100, 100))
         self.xpos = xpos
         self.ypos = ypos
+        self.old_xpos = xpos
+        self.old_ypos = ypos
 
         if width < height:
             radius = width/2
@@ -41,27 +43,15 @@ class CheckerPiece(pygame.sprite.Sprite):
         self.shape = pygame.draw.circle(self.image, color, (width/2, height/2), radius, 0)
         self.rect = self.image.get_rect()
 
-    def __repr__(self):
+    def print_boardpos(self, pos):
         (width, height) = pygame.display.get_surface().get_size()
-        sq_xpos = int(self.xpos // ((width-width/3.05) // 8))
-        sq_ypos = 7 - (self.ypos // (height // 8))
+        (xpos, ypos) = pos
+        sq_xpos = int(xpos // ((width-width/3.05) // 8))
+        sq_ypos = 7 - (ypos // (height // 8))
 
         board_space = 8*sq_ypos+sq_xpos
         logging.root.debug("Computer Repr: %d//2" % board_space)
         return str(board_space//2)
-
-    def __str__(self):
-        (width, height) = pygame.display.get_surface().get_size()
-        sq_xpos = int(self.xpos // ((width-width/3.05) // 8))
-        sq_ypos = 7 - (self.ypos // (height // 8))
-        board_space = 8*sq_ypos+sq_xpos
-        
-        xpos = board_space % 8
-        ypos = ((board_space) // 8) + 1
-
-        str_pos = string.uppercase[xpos] + str(ypos)
-        logging.root.debug("Human Repr: %s" % str_pos)
-        return str_pos
 
     def update(self,pos=None):
         if pos is None:
@@ -108,6 +98,8 @@ class CheckerPiece(pygame.sprite.Sprite):
 
         sq_xpos = (xpos // self.size[0]) * self.size[0]
         sq_ypos = (ypos // self.size[1]) * self.size[1]
+        self.old_xpos = self.xpos
+        self.old_ypos = self.ypos
         self.xpos = sq_xpos + self.size[0]/2
         self.ypos = sq_ypos + self.size[1]/2
         return (self.xpos, self.ypos)

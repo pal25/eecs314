@@ -157,8 +157,10 @@ class Game(object):
                         pygame.display.flip()
 
             elif state == P1_VALIDATE:
-                spim.stdin.write(repr(self.current_piece) + "\n")
-
+                pos = (self.current_piece.old_xpos, self.current_piece.old_ypos)
+                spim.stdin.write(self.current_piece.print_boardpos(pos) + "\n")
+                pos = (self.current_piece.xpos, self.current_piece.ypos)
+                spim.stdin.write(self.current_piece.print_boardpos(pos) + "\n")
                 data = self.read_spim()
                 if data:
                     state = P1_MOVE
@@ -220,7 +222,10 @@ class Game(object):
                         pygame.display.flip()
             
             elif state == P2_VALIDATE:
-                spim.stdin.write(repr(self.current_piece) + "\n")
+                pos = (self.current_piece.old_xpos, self.current_piece.old_ypos)
+                spim.stdin.write(self.current_piece.print_boardpos(pos) + "\n")
+                pos = (self.current_piece.xpos, self.current_piece.ypos)
+                spim.stdin.write(self.current_piece.print_boardpos(pos) + "\n")
 
                 data = self.read_spim()
                 if data:
