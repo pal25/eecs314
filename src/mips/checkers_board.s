@@ -561,7 +561,7 @@ validateupjump:
         j validatebothup
 
         validateleftuponly:
-        jal validateupleftsideonly
+        jal validateupleftsidejump
         j endvalidateupjump
 
         validaterightuponly:
