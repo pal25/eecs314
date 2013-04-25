@@ -717,7 +717,7 @@ validatedownjump:
         j validatebothdown
 
         validateleftdownonly:
-        jal validatedownleftsideonly
+        jal validatedownleftsidejump
         j endvalidatedownjump
 
         validaterightdownonly:
