@@ -733,16 +733,16 @@ outputboard: 			# Responsible for printing out the board to Python
 	la $t4, b_rank 		#rank
 	lw $t4, 0($t4)
 	
-        outputloop: 		# Loop for outputboard
-	add $t5, $zero, $zero 	# Initialize t5 to 0
-	add $t6, $zero, $zero
-	
 	# Print the valid move header
 	la $a0, validmove
 	lb $a0 0($a0)
         addi $v0, $zero, 1
 	syscall
 
+        outputloop: 		# Loop for outputboard
+	add $t5, $zero, $zero 	# Initialize t5 to 0
+	add $t6, $zero, $zero
+	
 	# Shift t0-th value from t2 into t6
 	srav $t5, $t2, $t0
 	andi $t5, $t5, 1
@@ -777,7 +777,7 @@ outputboard: 			# Responsible for printing out the board to Python
 
 	# After loop print newline
 	la $a0, newline
-	addi $v0, 5
+	addi $v0, $zero, 4
 	syscall
 
 	# Return to code
