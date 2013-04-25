@@ -224,7 +224,7 @@ validatep1:
 	#get occupancy of space from b_haspiece
 	la $t0, b_haspiece
 	lw $t0, ($t0)
-	srl $t0, $t0, $s2
+	srlv $t0, $t0, $s2
 	andi $t0, $t0, 1
 	#if the space isn't 0, its not empty, so we can't move to it
 	bne $t0, $zero, endvalidatep1
@@ -332,7 +332,7 @@ validatep2:
 	#get occupancy of space from b_haspiece
 	la $t0, b_haspiece
 	lw $t0, ($t0)
-	srl $t0, $t0, $s2
+	srlv $t0, $t0, $s2
 	andi $t0, $t0, 1
 	#if the space isn't 0, its not empty, so we can't move to it
 	bne $t0, $zero, endvalidatep2
@@ -755,7 +755,7 @@ updateboard: 		# Update the board positions given and old and new pos
 
 	# Determine which number is larger
 	slt $t2, $t0, $t1
-	beq $t2, $zero, updatesub1
+	bne $t2, $zero, updatesub1
 
 	# Subtract larger number from smaller number
         updatesub2:
