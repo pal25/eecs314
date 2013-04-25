@@ -443,7 +443,7 @@ validateupmove:
                 #check for a "5" move validity from first four spaces
                 move $t2, $zero
                 checkforupmove5:
-                beq $t0, $t2 checkforupmove4
+                beq $t0, $t2 checkforupmove4intro
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfum4end
                                 #if the from space is the space we're on, we can validate
@@ -619,10 +619,10 @@ validatedownmove:
         checkfordownmove:
         #check each space to see if a move is valid.
         beq $t0, $t1, checkfordownjump
-                #check for a "5" move validity from first four spaces
+                #check for a "3" move validity from first four spaces
                 move $t2, $zero
                 checkfordownmove5:
-                beq $t0, $t2 checkfordownmove4
+                beq $t0, $t2 checkfordownmove4intro
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfdm4end
                                 #if the from space is the space we're on, we can validate
@@ -639,7 +639,7 @@ validatedownmove:
                         addi $t5, $t5, 1
                 j checkfordownmove5
                 
-                #check for a "4" move validity from next four spaces
+                #check for a "5" move validity from next four spaces
                 checkfordownmove4intro:
                 move $t2, $zero
                 checkfordownmove4:
