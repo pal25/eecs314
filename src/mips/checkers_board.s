@@ -744,21 +744,24 @@ outputboard: 			# Responsible for printing out the board to Python
 	syscall
 
 	# Shift t0-th value from t2 into t6
-	sllv $t5, $t2, $t0
-	add $t6, $t6, $t5
+	srav $t5, $t2, $t0
+	andi $t5, $t5, 1
+        add $t6, $t6, $t5
 	sll $t6, $t6, 1
 
         andi $t6, $t6, 7 #getting lowest three bits of t6
 	
         # Shift t0-th value from t3 into t6
-	sllv $t5, $t3, $t0
-	add $t6, $t6, $t5
+	srav $t5, $t3, $t0
+	andi $t5, $t5, 1
+        add $t6, $t6, $t5
 	sll $t6, $t6, 1
 
         andi $t6, $t6, 7 #getting lowest three bits of t6
 	
         # Shift t0-th value from t4 into t6
-	sllv $t5, $t4, $t0
+	srav $t5, $t4, $t0
+        andi $t5, $t5, 1
 	add $t6, $t6, $t5
 
         andi $t6, $t6, 7 #getting lowest three bits of t6
