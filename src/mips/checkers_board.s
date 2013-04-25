@@ -86,7 +86,6 @@ newgame:
 		lb $t0, ($t0)
 		bne $t0, $zero, validp1
 		#!send "invalid move message" to python
-		#!send board state
 
                 li $v0, 1
 		la $t0, invalidmove
@@ -150,8 +149,8 @@ newgame:
 		la $t0, valid
 		lb $t0, ($t0)
 		bne $t0, $zero, validp2
-		#!send "invalid move message" to python
-		#!send board state
+		
+                #send "invalid move message" to python
 		
                 li $v0, 1
 		la $t0, invalidmove
