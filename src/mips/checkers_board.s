@@ -40,7 +40,7 @@ newgame:
 	#init the "haspiece" datastructure
 	#we only can use 16-bits in immediate instructions
 	la $t0, b_haspiece
-	addi $t1, 4095 
+	addi $t1, $zero, 4095 
 	sll $t1, $t1, 20
 	ori $t1, $t1, 4095
 	sw $t1, ($t0)
