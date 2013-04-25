@@ -80,7 +80,6 @@ class GameScreen(GenericScreen):
         winbg = pygame.Surface((self.width/3.05, self.height))
         winbg.fill(WHITE)
         self.screen.blit(winbg, (self.width-self.width/3.05, 0))
-        logging.root.debug("Adding side window at (%d, %d)" % (self.width-self.width/3.05, 0))
 
         self.draw_text_small(turn, BLACK, WHITE, self.width-(self.width/3.05)/2, self.height*1/20)
 

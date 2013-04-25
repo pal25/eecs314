@@ -50,7 +50,6 @@ class CheckerPiece(pygame.sprite.Sprite):
         sq_ypos = 7 - (ypos // (height // 8))
 
         board_space = 8*sq_ypos+sq_xpos
-        logging.root.debug("Computer Repr: %d//2" % board_space)
         return str(board_space//2)
 
     def update(self,pos=None):
