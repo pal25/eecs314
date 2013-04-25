@@ -859,10 +859,10 @@ updatejump:
 	        bne $t4, $zero, ogtncount2 	# Take if $t3 == 7
         ogtncount1:			# $t3 == 9
 	        addi $t3, $t1, 5	# Count 5 from new
-	        j updateremove		# Jump to remove code
+	        j updatejremove		# Jump to remove code
         ogtncount2:			# $t3 == 7
 	        addi $t3, $t1, 4	# Count 4 from new
-	        j updateremove		# Jump to remove code
+	        j updatejremove		# Jump to remove code
 
 
         updatejnewgtold: 		# Figure out piece to remove new > old 	
@@ -871,10 +871,10 @@ updatejump:
 	        bne $t4, $zero, ngtocount2 	# Take if $t3 == 7
         ngtocount1:			# $t3 == 9
 	        addi $t3, $t0, 4	# Count 4 from old
-	        j updateremove		# Jump to remove code
+	        j updatejremove		# Jump to remove code
         ngtocount2:			# $t3 == 7
 	        addi $t3, $t0, 3	# Count 3 from old
-	        j updateremove		# Jump to remove code
+	        j updatejremove		# Jump to remove code
 
 
         updatejremove:			# Remove the position
