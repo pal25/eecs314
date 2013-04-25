@@ -55,6 +55,8 @@ newgame:
 	add $t1, $zero, $zero
 	sw $t1, ($t0)
   
+        jal outputboard
+
 	p1:
 		#get message for move
 		li $v0, 5
@@ -96,9 +98,9 @@ newgame:
 
 		validp1:
 		jal updateboard
-
+                jal outputboard
 	endp1:
-	jal victorychk
+	#!!!jal victorychk
 	#if there is no victory, go to p2
 	la $t0, victory
 	lb $t0, ($t0)
@@ -159,11 +161,11 @@ newgame:
 
 		validp2:
 		
-		jal update_board
-		
+		jal updateboard
+		jal outputboard
 		endp2:
 
-	jal victorychk
+	#!!!jal victorychk
 	#if there is no victory, go back to p1 turn
 	la $t0, victory
 	lb $t0, ($t0)
@@ -183,7 +185,10 @@ newgame:
 		
 	endai:
 	
-	jal victorychk
+        jal updateboard
+        jal outputboard
+
+	#!!!jal victorychk
 	#if there is no victory, go back to p1 turn
 	la $t0, victory
 	lb $t0, ($t0)
@@ -440,7 +445,7 @@ validateupmove:
                 
                 #check for a "4" move validity from next four spaces
                 checkforupmove4intro:
-                move $t2, zero
+                move $t2, $zero
                 checkforupmove4:
                 beq $t0, $t2 checkforupmoveEIL
                         #check to see if the from space is in this row
@@ -505,15 +510,15 @@ validatedownmove:
         #$t6 is used for math
         addi $t7, $zero, 3 #static 3 for space comparison
 
-        checkforupmove:
+        checkfordownmove:
         #check each space to see if a move is valid.
-        beq $t0, $t1, checkforupjump
+        beq $t0, $t1, checkfordownjump
                 #check for a "5" move validity from first four spaces
                 move $t2, $zero
-                checkforupmove5:
-                beq $t0, $t2 checkforupmove4
+                checkfordownmove5:
+                beq $t0, $t2 checkfordownmove4
                         #check to see if the from space is in this row
-                        bne $t5, $s1, cfum4end
+                        bne $t5, $s1, cfdm4end
                                 #if the from space is the space we're on, we can validate
                                 sub $t6, $s1, $s2
                                 #if the difference between the spaces is 4, validate
@@ -521,19 +526,19 @@ validatedownmove:
                                 #if the difference between the spaces if 3, validate
                                 beq $t6, $t7, setvalid
                                 #otherwise, check for a jump
-                                j scheckforupjump
-                        cfum4end:
+                                j scheckfordownjump
+                        cfdm4end:
                         addi $t2, $zero, 1
                         addi $t5, $t5, 1
-                j checkforupmove5
+                j checkfordownmove5
                 
                 #check for a "4" move validity from next four spaces
-                checkforupmove4intro:
-                move $t2, zero
-                checkforupmove4:
-                beq $t0, $t2 checkforupmoveEIL
+                checkfordownmove4intro:
+                move $t2, $zero
+                checkfordownmove4:
+                beq $t0, $t2 checkfordownmoveEIL
                         #check to see if the from space is in this row
-                        bne $t5, $s1, cfum3end
+                        bne $t5, $s1, cfdm3end
                                 #if the from space is the space we're on, we can validate
                                 sub $t6, $s1, $s2
                                 #if the difference between the spaces is 4, validate
@@ -541,22 +546,22 @@ validatedownmove:
                                 #if the difference between the spaces if 5, validate
                                 beq $t6, $t3, setvalid
                                 #otherwise, check for a jump
-                                j scheckforupjump
-                        cfum3end:
+                                j scheckfordownjump
+                        cfdm3end:
                          
                         addi $t2, $zero, 1
                         addi $t5, $t5, 1
-                j checkforupmove4
+                j checkfordownmove4
 
-                checkforupmoveEIL:
+                checkfordownmoveEIL:
                 addi $t1, $zero, 1
-        j checkforupmove
+        j checkfordownmove
 
-        checkforupjump:
+        checkfordownjump:
         #if no moves are valid, check to see if a jump is (depricated. moved to different function)
         
 
-	endvalidateupmove:
+	endvalidatedownmove:
 	jr $ra
 
 validatedownsidemove:
@@ -634,7 +639,7 @@ updateboard: 		# Update the board positions given and old and new pos
 	and $t2, $t2, $t5 	# And the bit mask to has_piece
 	
 	# Convert the new pos to 1
-	addi $t5, $zer0, 1	# Put a 1 in $t5
+	addi $t5, $zero, 1	# Put a 1 in $t5
 	sllv $t5, $t5, $t1	# Shift the 1 $t0 units
 	or $t2, $t2, $t5	# Or the bit mask to has_piece
 
@@ -677,12 +682,12 @@ victorychk:
 
 	add $t3, $zero, $zero
 	
-	#check to see if p1 has any pieces
+	#check to see if p2 has any pieces
 	loopp1:
 	beq $t1, $t0, endp1check
 
-	#!shift a bit from t2 into t3
-	bne $zero, $t3, setvictory
+	andi $t3, $t2, 1
+	bne $zero, $t3, endp1check
 	
 	addi $t1, $t1, 1
 	j loopp1
@@ -696,12 +701,12 @@ victorychk:
 
 	add $t3, $zero, $zero
    
-	#check to see if p2 has any pieces
+	#check to see if p1 has any pieces
 	loopp2:
 	beq $t1, $t0, endp2check
 
-	#!shift a bit from t2 into t3
-	beq $zero, $t3, setvictory
+	andi $t3, $t2, 1
+	beq $zero, $t3, endp2check
 	
 	addi $t1, $t1, 1
 	j loopp2
@@ -718,7 +723,7 @@ setvictory:
 	jr $ra
 
 outputboard: 			# Responsible for printing out the board to Python
-	addi $t0, $zero, $zero 	# Bit position and counter
+	add $t0, $zero, $zero 	# Bit position and counter
 	addi $t1, $zero, 32 	# End value
 	
 	la $t2, b_haspiece 	#has piece
@@ -733,8 +738,9 @@ outputboard: 			# Responsible for printing out the board to Python
 	add $t6, $zero, $zero
 	
 	# Print the valid move header
-	li $a0, validmove
-	addi $v0, $zero, 1
+	la $a0, validmove
+	lb $a0 0($a0)
+        addi $v0, $zero, 1
 	syscall
 
 	# Shift t0-th value from t2 into t6
