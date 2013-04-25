@@ -142,7 +142,7 @@ newgame:
 		syscall
 		move $s2, $v0
 	
-		jal validateP2
+		jal validatep2
 
 		la $t0, valid
 		lb $t0, ($t0)
@@ -437,7 +437,7 @@ validateupmove:
                                 #if the difference between the spaces if 5, validate
                                 beq $t6, $t3, setvalid
                                 #otherwise, check for a jump
-                                j scheckforupjump
+                                j checkforupjump
                         cfum4end:
                         addi $t2, $zero, 1
                         addi $t5, $t5, 1
@@ -457,7 +457,7 @@ validateupmove:
                                 #if the difference between the spaces if 3, validate
                                 beq $t6, $t7, setvalid
                                 #otherwise, check for a jump
-                                j scheckforupjump
+                                j checkforupjump
                         cfum3end:
                          
                         addi $t2, $zero, 1
@@ -526,7 +526,7 @@ validatedownmove:
                                 #if the difference between the spaces if 3, validate
                                 beq $t6, $t7, setvalid
                                 #otherwise, check for a jump
-                                j scheckfordownjump
+                                j checkfordownjump
                         cfdm4end:
                         addi $t2, $zero, 1
                         addi $t5, $t5, 1
@@ -546,7 +546,7 @@ validatedownmove:
                                 #if the difference between the spaces if 5, validate
                                 beq $t6, $t3, setvalid
                                 #otherwise, check for a jump
-                                j scheckfordownjump
+                                j checkfordownjump
                         cfdm3end:
                          
                         addi $t2, $zero, 1
