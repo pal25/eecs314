@@ -27,6 +27,7 @@ newline: .asciiz "\n"
 #s0 register helps in return
 #s1 register used for "from" space
 #s2 register used for "to" space
+#s3 register used to help returns during jump
 #also use t0-t3
 main:
 newgame:
@@ -87,14 +88,15 @@ newgame:
 		#!send "invalid move message" to python
 		#!send board state
 
-                #li $v0, 1
-		#la $t0, invalidmove
-		#lb $a0, ($t0)
+                li $v0, 1
+		la $t0, invalidmove
+		lb $a0, ($t0)
 		#syscall
 		#li $v0, 4
 		#la $a0, newline
-		#syscall
-		j p1
+		syscall
+		
+                j p1
 
 		validp1:
 		jal updateboard
@@ -258,6 +260,9 @@ validatep1:
 	
 	jal validatedownmove
 	
+        #if we haven't been able to move downward, check jump downward
+        #validatedownjump
+
 	#if a pawn move isn't valid, see if a king move is
 	kingmovep1:
 
@@ -302,6 +307,9 @@ validatep1:
 	beq $s1, $t0, endvalidatep1
 	
 	jal validateupmove
+
+        #if it isn't a king moving up, see if its a king jumping up
+        #jal validateupjump
 
 	endvalidatep1:
 	jr $s0
@@ -361,6 +369,9 @@ validatep2:
 	
 	jal validateupmove
 
+        #if it isn't a move up, it may be a jump up
+        #jal validateupjump
+
 	#if a pawn move isn't valid, see if a king move is
 	kingmovep2:
 
@@ -405,6 +416,9 @@ validatep2:
 
 	jal validatedownmove
 
+        #if its a king that can't move down, check a jump down
+        #jal validatedownjump
+
 	endvalidatep2:
 	jr $s0
 
@@ -433,7 +447,8 @@ validateupmove:
                                 #if the from space is the space we're on, we can validate
                                 sub $t6, $s2, $s1
                                 #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
+                                #covered in sidemove
+                                #beq $t6, $t4, setvalid
                                 #if the difference between the spaces if 5, validate
                                 beq $t6, $t3, setvalid
                                 #otherwise, check for a jump
@@ -453,7 +468,8 @@ validateupmove:
                                 #if the from space is the space we're on, we can validate
                                 sub $t6, $s2, $s1
                                 #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
+                                #covered in sidemove
+                                #beq $t6, $t4, setvalid
                                 #if the difference between the spaces if 3, validate
                                 beq $t6, $t7, setvalid
                                 #otherwise, check for a jump
@@ -490,10 +506,78 @@ validateupsidemove:
 
 validateupjump:
 
-	
-	jr $ra
+        move $s3, $ra
 
-validateupsidejump:
+        #if the piece is in the top two rows, it can't jump up
+        move $t0, $zero
+        addi $t0, $t0, 24
+        beq $s1, $t0, endvalidateupjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidateupjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidateupjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidateupjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidateupjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidateupjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidateupjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidateupjump
+
+        #if the piece is on the left, only validate left
+        move $t0, $zero
+        beq $s1, $t0, validateleftuponly #space 0
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftuponly #space 4
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftuponly #space 8
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftuponly #space 12
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftuponly #space 16
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftuponly #space 20
+
+        #if the piece is on the right, only validate right
+        addi $t0, $zero, 3 
+        beq $s1, $t0, validaterightuponly #space 3
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightuponly #space 7
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightuponly #space 11
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightuponly #space 15
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightuponly #space 19
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightuponly #space 23
+
+        #otherwise, validate both
+        j validatebothup
+
+        validateleftuponly:
+        jal validateupleftsideonly
+        j endvalidateupjump
+
+        validaterightuponly:
+        jal validateuprightsidejump
+        j endvalidateupjump
+
+        validatebothup:
+        jal validateuprightsidejump
+        jal validateupleftsidejump
+
+        endvalidateupjump:
+	jr $s3
+
+validateupleftsidejump:
+
+        jr $ra
+
+validateuprightsidejump:
 
         jr $ra
 
@@ -522,7 +606,8 @@ validatedownmove:
                                 #if the from space is the space we're on, we can validate
                                 sub $t6, $s1, $s2
                                 #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
+                                #covered in sidemove
+                                #beq $t6, $t4, setvalid
                                 #if the difference between the spaces if 3, validate
                                 beq $t6, $t7, setvalid
                                 #otherwise, check for a jump
@@ -542,7 +627,8 @@ validatedownmove:
                                 #if the from space is the space we're on, we can validate
                                 sub $t6, $s1, $s2
                                 #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
+                                #covered in sidemove
+                                #beq $t6, $t4, setvalid
                                 #if the difference between the spaces if 5, validate
                                 beq $t6, $t3, setvalid
                                 #otherwise, check for a jump
@@ -579,7 +665,79 @@ validatedownsidemove:
 
 validatedownjump:
 
-	jr $ra
+        move $s3, $ra
+
+        #if the piece is in the bottom two rows, it can't jump down
+        move $t0, $zero
+        beq $s1, $t0, endvalidatedownjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidatedownjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidatedownjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidatedownjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidatedownjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidatedownjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidatedownjump
+        addi $t0, $t0 1
+        beq $s1, $t0, endvalidatedownjump
+
+        #if the piece is on the left, only validate left
+        addi $t0, $zero, 8
+        beq $s1, $t0, validateleftdownonly #space 8
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftdownonly #space 12
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftdownonly #space 16
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftdownonly #space 20
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftdownonly #space 24
+        addi $t0, $t0, 4
+        beq $s1, $t0, validateleftdownonly #space 28
+
+        #if the piece is on the right, only validate right
+        addi $t0, $zero, 11 
+        beq $s1, $t0, validaterightdownonly #space 11
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightdownonly #space 15
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightdownonly #space 19
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightdownonly #space 23
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightdownonly #space 27
+        addi $t0, $zero, 4 
+        beq $s1, $t0, validaterightdownonly #space 31
+
+        #otherwise, validate both
+        j validatebothdown
+
+        validateleftdownonly:
+        jal validatedownleftsideonly
+        j endvalidatedownjump
+
+        validaterightdownonly:
+        jal validatedownrightsidejump
+        j endvalidatedownjump
+
+        validatebothdown:
+        jal validatedownrightsidejump
+        jal validatedownleftsidejump
+
+        endvalidatedownjump:
+	jr $s3
+
+validatedownrightsidejump:
+
+        jr $a0
+
+validatedownleftsidejump:
+
+        jr $a0
 
 setvalid:
 
