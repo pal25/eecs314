@@ -91,9 +91,9 @@ newgame:
                 li $v0, 1
 		la $t0, invalidmove
 		lb $a0, ($t0)
-		#syscall
-		#li $v0, 4
-		#la $a0, newline
+		syscall
+		li $v0, 4
+		la $a0, newline
 		syscall
 		
                 j p1
@@ -153,13 +153,13 @@ newgame:
 		#!send "invalid move message" to python
 		#!send board state
 		
-                #li $v0, 1
-		#la $t0, invalidmove
-		#lb $a0, ($t0)
-		#syscall
-		#li $v0, 4
-		#la $a0, newline
-		#syscall
+                li $v0, 1
+		la $t0, invalidmove
+		lb $a0, ($t0)
+		syscall
+		li $v0, 4
+		la $a0, newline
+		syscall
 		j p2
 
 		validp2:
@@ -456,7 +456,7 @@ validateupmove:
                                 #otherwise, check for a jump
                                 j checkforupjump
                         cfum4end:
-                        addi $t2, $zero, 1
+                        addi $t2, $t2, 1
                         addi $t5, $t5, 1
                 j checkforupmove5
                 
@@ -478,12 +478,12 @@ validateupmove:
                                 j checkforupjump
                         cfum3end:
                          
-                        addi $t2, $zero, 1
+                        addi $t2, $t2, 1
                         addi $t5, $t5, 1
                 j checkforupmove4
 
                 checkforupmoveEIL:
-                addi $t1, $zero, 1
+                addi $t1, $t1, 1
         j checkforupmove
 
         checkforupjump:
@@ -577,10 +577,30 @@ validateupjump:
 
 validateupleftsidejump:
 
+        #check if the to space is 9 greater than the from
+        sub $t0, $s2, $s1
+        addi $t1, $zero, 9
+
+        bne $t0, $t1, endvalidateupleftsidejump
+
+        #need to make sure an opposing piece is in the middle
+        #which sucks a lot
+
+        endvalidateupleftsidejump:
         jr $ra
 
 validateuprightsidejump:
 
+        #check if the to space is 7 greater than the from
+        sub $t0, $s2, $s1
+        addi $t1, $zero, 7
+
+        bne $t0, $t1, endvalidateuprightsidejump
+
+        #need to make sure an opposing piece is in the middle
+        #which sucks a lot
+
+        endvalidateuprightsidejump:
         jr $ra
 
 validatedownmove:
@@ -615,7 +635,7 @@ validatedownmove:
                                 #otherwise, check for a jump
                                 j checkfordownjump
                         cfdm4end:
-                        addi $t2, $zero, 1
+                        addi $t2, $t2, 1
                         addi $t5, $t5, 1
                 j checkfordownmove5
                 
@@ -637,12 +657,12 @@ validatedownmove:
                                 j checkfordownjump
                         cfdm3end:
                          
-                        addi $t2, $zero, 1
+                        addi $t2, $t2, 1
                         addi $t5, $t5, 1
                 j checkfordownmove4
 
                 checkfordownmoveEIL:
-                addi $t1, $zero, 1
+                addi $t1, $t1, 1
         j checkfordownmove
 
         checkfordownjump:
