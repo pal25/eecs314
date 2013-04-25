@@ -101,6 +101,7 @@ newgame:
 		validp1:
 		jal updateboard
                 jal outputboard
+                j p1
 	endp1:
 	#!!!jal victorychk
 	#if there is no victory, go to p2
@@ -165,6 +166,7 @@ newgame:
 		
 		jal updateboard
 		jal outputboard
+                j p2
 		endp2:
 
 	#!!!jal victorychk
@@ -189,7 +191,7 @@ newgame:
 	
         jal updateboard
         jal outputboard
-
+        
 	#!!!jal victorychk
 	#if there is no victory, go back to p1 turn
 	la $t0, victory
