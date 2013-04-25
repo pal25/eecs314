@@ -8,7 +8,7 @@ from checker_sprites import CheckerPiece
 import logging
 import logging.config
 
-spim = subprocess.Popen(['spim', '-file', 'test.s'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+spim = subprocess.Popen(['spim', '-file', '../mips/checkers_board.s'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 class Game(object):
     
