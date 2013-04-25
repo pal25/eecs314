@@ -1077,31 +1077,79 @@ updatejump:
 	# Determine which number is larger
 	slt $t3, $t0, $t1
 	beq $t3, $zero, updatejnewgtold 	# Take if $t1 > $t0
-	
+
         updatejoldgtnew: 		# Figure out piece to remove old > new
 	        sub $t3, $t0, $t1 	# The difference old - new
+
+	        # Check the line 
+	        slti $t4 $t0, 12 	# If $t0 < 12 ? 1 : 0
+		bne $t4, $zero, ogtncount34
+	        slti $t4, $t0, 16	# IF $t0 < 16 ? 1 : 0
+	        bne $t4, $zero, ogtncount54
+	        slti $t4 $t0, 20 	# If $t0 < 20 ? 1 : 0
+		bne $t4, $zero, ogtncount34
+	        slti $t4, $t0, 24	# IF $t0 < 24 ? 1 : 0
+	        bne $t4, $zero, ogtncount54
+	        j ogtncount34 		# ELSE $t0 >= 24
+
+        ogtncount54:	
 	        slti $t4, $t3, 8
-	        bne $t4, $zero, ogtncount2 	# Take if $t3 == 7
-        ogtncount1:			# $t3 == 9
+	        bne $t4, $zero, ogtncount254 	# Take if $t3 == 7
+        ogtncount154:			# $t3 == 9
 	        addi $t3, $t1, 5	# Count 5 from new
 	        j updatejremove		# Jump to remove code
-        ogtncount2:			# $t3 == 7
+        ogtncount254:			# $t3 == 7
 	        addi $t3, $t1, 4	# Count 4 from new
 	        j updatejremove		# Jump to remove code
 
+        ogtncount34:	
+	        slti $t4, $t3, 8
+	        bne $t4, $zero, ogtncount234 	# Take if $t3 == 7
+        ogtncount134:			# $t3 == 9
+	        addi $t3, $t1, 4	# Count 5 from new
+	        j updatejremove		# Jump to remove code
+        ogtncount234:			# $t3 == 7
+	        addi $t3, $t1, 3	# Count 4 from new
+	        j updatejremove		# Jump to remove code
+
+	
 
         updatejnewgtold: 		# Figure out piece to remove new > old 	
 	        sub $t3, $t1, $t0 	# The difference new - old
+
+	        # Check the line 
+	        slti $t4 $t1, 12 	# If $t1 < 12 ? 1 : 0
+		bne $t4, $zero, ngtocount34
+	        slti $t4, $t1, 16	# IF $t1 < 16 ? 1 : 0
+	        bne $t4, $zero, ngtocount54
+	        slti $t4 $t1, 20 	# If $t1 < 20 ? 1 : 0
+		bne $t4, $zero, ngtocount34
+	        slti $t4, $t1, 24	# IF $t1 < 24 ? 1 : 0
+	        bne $t4, $zero, ngtocount54
+	        j ngtocount34		# ELSE $t1 > 24
+
+        ngtocount34:	
 	        slti $t4, $t3, 8
-	        bne $t4, $zero, ngtocount2 	# Take if $t3 == 7
-        ngtocount1:			# $t3 == 9
+	        bne $t4, $zero, ngtocount234 	# Take if $t3 == 7
+        ngtocount134:			# $t3 == 9
 	        addi $t3, $t0, 4	# Count 4 from old
 	        j updatejremove		# Jump to remove code
-        ngtocount2:			# $t3 == 7
+        ngtocount234:			# $t3 == 7
 	        addi $t3, $t0, 3	# Count 3 from old
 	        j updatejremove		# Jump to remove code
 
+        ngtocount54:	
+	        slti $t4, $t3, 8
+	        bne $t4, $zero, ngtocount254 	# Take if $t3 == 7
+        ngtocount154:			# $t3 == 9
+	        addi $t3, $t0, 5	# Count 4 from old
+	        j updatejremove		# Jump to remove code
+        ngtocount254:			# $t3 == 7
+	        addi $t3, $t0, 4	# Count 3 from old
+	        j updatejremove		# Jump to remove code
 
+
+	
         updatejremove:			# Remove the position
 	        la $t4, b_haspiece 	# Get the addr for the piece array
 	        lw $t4, 0($t4)		# Load the array into $t4
