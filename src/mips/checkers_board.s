@@ -55,6 +55,8 @@ newgame:
 	add $t1, $zero, $zero
 	sw $t1, ($t0)
   
+        jal outputboard
+
 	p1:
 		#get message for move
 		li $v0, 5
@@ -82,21 +84,23 @@ newgame:
 		la $t0, valid
 		lb $t0, ($t0)
 		bne $t0, $zero, validp1
-		#send "invalid move message" to python
-		li $v0, 1
-		la $t0, invalidmove
-		lb $a0, ($t0)
-		syscall
-		li $v0, 4
-		la $a0, newline
-		syscall
+		#!send "invalid move message" to python
+		#!send board state
+
+                #li $v0, 1
+		#la $t0, invalidmove
+		#lb $a0, ($t0)
+		#syscall
+		#li $v0, 4
+		#la $a0, newline
+		#syscall
 		j p1
 
 		validp1:
 		jal updateboard
-
+                jal outputboard
 	endp1:
-	jal victorychk
+	#!!!jal victorychk
 	#if there is no victory, go to p2
 	la $t0, victory
 	lb $t0, ($t0)
@@ -143,23 +147,25 @@ newgame:
 		la $t0, valid
 		lb $t0, ($t0)
 		bne $t0, $zero, validp2
-		#send "invalid move message" to python
-		li $v0, 1
-		la $t0, invalidmove
-		lb $a0, ($t0)
-		syscall
-		li $v0, 4
-		la $a0, newline
-		syscall
+		#!send "invalid move message" to python
+		#!send board state
+		
+                #li $v0, 1
+		#la $t0, invalidmove
+		#lb $a0, ($t0)
+		#syscall
+		#li $v0, 4
+		#la $a0, newline
+		#syscall
 		j p2
 
 		validp2:
 		
-		jal update_board
-		
+		jal updateboard
+		jal outputboard
 		endp2:
 
-	jal victorychk
+	#!!!jal victorychk
 	#if there is no victory, go back to p1 turn
 	la $t0, victory
 	lb $t0, ($t0)
@@ -179,7 +185,10 @@ newgame:
 		
 	endai:
 	
-	jal victorychk
+        jal updateboard
+        jal outputboard
+
+	#!!!jal victorychk
 	#if there is no victory, go back to p1 turn
 	la $t0, victory
 	lb $t0, ($t0)
@@ -401,33 +410,83 @@ validatep2:
 
 validateupmove:
 
-	#only needs to handle the 5 shift
-        move $t3, $ra
+	#handles pieces in the center moving up 3/4 or 4/5
 
-        #if the space moving to is the 5th space higher, a move there is valid
+        addi $t0, $zero, 4 #holds 4 for loop stop
+        add $t1, $zero, $zero #outside iterator
+        add $t2, $zero, $zero #inside iterator
+        addi $t3, $zero, 5 #static 5 for space comparison
+        addi $t4, $zero, 4 #static 4 for space comparison
+        add $t5, $zero, $zero #iterator for space
+        #$t6 is used for math
+        addi $t7, $zero, 3 #static 3 for space comparison
 
-        sub $t0, $s3, $s2
-        addi $t1, $zero, 5
+        checkforupmove:
+        #check each space to see if a move is valid.
+        beq $t0, $t1, checkforupjump
+                #check for a "5" move validity from first four spaces
+                move $t2, $zero
+                checkforupmove5:
+                beq $t0, $t2 checkforupmove4
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfum4end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s2, $s1
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 5, validate
+                                beq $t6, $t3, setvalid
+                                #otherwise, check for a jump
+                                j scheckforupjump
+                        cfum4end:
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkforupmove5
+                
+                #check for a "4" move validity from next four spaces
+                checkforupmove4intro:
+                move $t2, $zero
+                checkforupmove4:
+                beq $t0, $t2 checkforupmoveEIL
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfum3end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s2, $s1
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 3, validate
+                                beq $t6, $t7, setvalid
+                                #otherwise, check for a jump
+                                j scheckforupjump
+                        cfum3end:
+                         
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkforupmove4
 
-        bne $t0, $t1, checkforupjump
-        
-	
-        j endvalidateupmove
+                checkforupmoveEIL:
+                addi $t1, $zero, 1
+        j checkforupmove
+
         checkforupjump:
-        #if the space moving to is not the 5th space higher, check for a jump
-
-        
+        #if no moves are valid, check to see if a jump is (depricated. moved to different function)
         
 
 	endvalidateupmove:
-	jr $t0
+	jr $ra
 	
 validateupsidemove:
 
-	#only needs to handle the 4 shift
-	move $t3, $ra
+        #on the side, a piece must be 4 away
+        addi $t1, $zero, 4
+        
+        #get the difference between the spaces
+        sub $t0, $s2, $s1
+        #if the difference is 4, validate
+        beq $t0, $t1, setvalid
 
-	jr $t0
+        #otherwise, its invalid, continue on
+	jr $ra
 
 validateupjump:
 
@@ -440,19 +499,83 @@ validateupsidejump:
 
 validatedownmove:
 
-	#only needs to handle the 5 shift
-	move $t3, $ra
+	#handles pieces in the center moving up 3/4 or 4/5
 
+        addi $t0, $zero, 4 #holds 4 for loop stop
+        add $t1, $zero, $zero #outside iterator
+        add $t2, $zero, $zero #inside iterator
+        addi $t3, $zero, 5 #static 5 for space comparison
+        addi $t4, $zero, 4 #static 4 for space comparison
+        add $t5, $zero, $zero #iterator for space
+        #$t6 is used for math
+        addi $t7, $zero, 3 #static 3 for space comparison
 
-	jr $t0
+        checkfordownmove:
+        #check each space to see if a move is valid.
+        beq $t0, $t1, checkfordownjump
+                #check for a "5" move validity from first four spaces
+                move $t2, $zero
+                checkfordownmove5:
+                beq $t0, $t2 checkfordownmove4
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfdm4end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s1, $s2
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 3, validate
+                                beq $t6, $t7, setvalid
+                                #otherwise, check for a jump
+                                j scheckfordownjump
+                        cfdm4end:
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkfordownmove5
+                
+                #check for a "4" move validity from next four spaces
+                checkfordownmove4intro:
+                move $t2, $zero
+                checkfordownmove4:
+                beq $t0, $t2 checkfordownmoveEIL
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfdm3end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s1, $s2
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 5, validate
+                                beq $t6, $t3, setvalid
+                                #otherwise, check for a jump
+                                j scheckfordownjump
+                        cfdm3end:
+                         
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkfordownmove4
+
+                checkfordownmoveEIL:
+                addi $t1, $zero, 1
+        j checkfordownmove
+
+        checkfordownjump:
+        #if no moves are valid, check to see if a jump is (depricated. moved to different function)
+        
+
+	endvalidatedownmove:
+	jr $ra
 
 validatedownsidemove:
 
-	#only needs to handle the 4 shift
-	move $t3, $ra
+        #on the side, a piece must be 4 away
+        addi $t1, $zero, 4
+        
+        #get the difference between the spaces
+        sub $t0, $s1, $s2
+        #if the difference is 4, validate
+        beq $t0, $t1, setvalid
 
-
-	jr $t0
+        #otherwise, its invalid, continue on
+	jr $ra
 
 validatedownjump:
 
@@ -516,7 +639,7 @@ updateboard: 		# Update the board positions given and old and new pos
 	and $t2, $t2, $t5 	# And the bit mask to has_piece
 	
 	# Convert the new pos to 1
-	addi $t5, $zer0, 1	# Put a 1 in $t5
+	addi $t5, $zero, 1	# Put a 1 in $t5
 	sllv $t5, $t5, $t1	# Shift the 1 $t0 units
 	or $t2, $t2, $t5	# Or the bit mask to has_piece
 
@@ -559,12 +682,12 @@ victorychk:
 
 	add $t3, $zero, $zero
 	
-	#check to see if p1 has any pieces
+	#check to see if p2 has any pieces
 	loopp1:
 	beq $t1, $t0, endp1check
 
-	#!shift a bit from t2 into t3
-	bne $zero, $t3, setvictory
+	andi $t3, $t2, 1
+	bne $zero, $t3, endp1check
 	
 	addi $t1, $t1, 1
 	j loopp1
@@ -578,12 +701,12 @@ victorychk:
 
 	add $t3, $zero, $zero
    
-	#check to see if p2 has any pieces
+	#check to see if p1 has any pieces
 	loopp2:
 	beq $t1, $t0, endp2check
 
-	#!shift a bit from t2 into t3
-	beq $zero, $t3, setvictory
+	andi $t3, $t2, 1
+	beq $zero, $t3, endp2check
 	
 	addi $t1, $t1, 1
 	j loopp2
@@ -600,7 +723,7 @@ setvictory:
 	jr $ra
 
 outputboard: 			# Responsible for printing out the board to Python
-	addi $t0, $zero, $zero 	# Bit position and counter
+	add $t0, $zero, $zero 	# Bit position and counter
 	addi $t1, $zero, 32 	# End value
 	
 	la $t2, b_haspiece 	#has piece
@@ -610,28 +733,38 @@ outputboard: 			# Responsible for printing out the board to Python
 	la $t4, b_rank 		#rank
 	lw $t4, 0($t4)
 	
+	# Print the valid move header
+	la $a0, validmove
+	lb $a0 0($a0)
+        addi $v0, $zero, 1
+	syscall
+
         outputloop: 		# Loop for outputboard
 	add $t5, $zero, $zero 	# Initialize t5 to 0
 	add $t6, $zero, $zero
 	
-	# Print the valid move header
-	li $a0, validmove
-	addi $v0, $zero, 1
-	syscall
-
 	# Shift t0-th value from t2 into t6
-	sllv $t5, $t2, $t0
-	add $t6, $t6, $t5
+	srav $t5, $t2, $t0
+	andi $t5, $t5, 1
+        add $t6, $t6, $t5
 	sll $t6, $t6, 1
 
-	# Shift t0-th value from t3 into t6
-	sllv $t5, $t3, $t0
-	add $t6, $t6, $t5
+        andi $t6, $t6, 7 #getting lowest three bits of t6
+	
+        # Shift t0-th value from t3 into t6
+	srav $t5, $t3, $t0
+	andi $t5, $t5, 1
+        add $t6, $t6, $t5
 	sll $t6, $t6, 1
 
-	# Shift t0-th value from t4 into t6
-	sllv $t5, $t4, $t0
+        andi $t6, $t6, 7 #getting lowest three bits of t6
+	
+        # Shift t0-th value from t4 into t6
+	srav $t5, $t4, $t0
+        andi $t5, $t5, 1
 	add $t6, $t6, $t5
+
+        andi $t6, $t6, 7 #getting lowest three bits of t6
 
 	# Print the three-tuple on range [000...111]
 	move $a0, $t6
@@ -644,7 +777,7 @@ outputboard: 			# Responsible for printing out the board to Python
 
 	# After loop print newline
 	la $a0, newline
-	addi $v0, 5
+	addi $v0, $zero, 4
 	syscall
 
 	# Return to code
