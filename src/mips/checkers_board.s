@@ -846,6 +846,7 @@ updateboard: 		# Update the board positions given and old and new pos
 	jr $ra
 
 updatejump:
+	
 	jr $ra
 	
 victorychk:
