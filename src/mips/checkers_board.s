@@ -4,7 +4,7 @@ victory: .byte 0
 valid: .byte 0
 jorm: .byte 0
 isai: .byte 0
-
+	
 #data structure for gameboard
 #for color, 0 is p1, 1 is p2
 b_haspiece: .word 0
@@ -467,10 +467,84 @@ setvalid:
 	#if the move is valid, jump all the way back into newgame
 	jr $s0
 
-updateboard:
+updateboard: 		# Update the board positions given and old and new pos
+	#s0 = ra
+	move $t0, $s1 	# Position from
+	move $t1, $s2 	# Position to
 
+	# Determine which number is larger
+	slt $t2, $t0, $t1
+	beq $t2, $zero, updatesub1
+
+	# Subtract larger number from smaller number
+        updatesub2:
+	sub $t2, $t0, $t1
+	j updatejumpcheck
+
+	# Subtract larger number from smaller number
+        updatesub1:
+	sub $t2, $t1, $t0
+
+	# Check if a jump was made
+	updatejumpcheck:	
+	slti $t2, $t2, 6
+	bne $t2, $zero, updatepiece
+
+	# Push the $ra to the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+	# Call update jump
+	jal updatejump
+
+	# Pop the $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	
+        updatepiece:	
+	la $t2, b_haspiece
+	lw $t2, 0($t2)
+	la $t3, b_color
+	lw $t3, 0($t3)
+	la $t4, b_rank
+	lw $t4, 0($t4)
+
+	# Convert the old pos to 0
+	addi $t5, $zero, 1 	# Put a 1 in $t5
+	sllv $t5, $t5, $t0 	# Shift the 1 $t0 units
+	not $t5, $t5 		# Invert to all 1's and 1 zero
+	and $t2, $t2, $t5 	# And the bit mask to has_piece
+	
+	# Convert the new pos to 1
+	addi $t5, $zer0, 1	# Put a 1 in $t5
+	sllv $t5, $t5, $t1	# Shift the 1 $t0 units
+	or $t2, $t2, $t5	# Or the bit mask to has_piece
+
+	# Copy the old color to the new color
+	srlv $t5, $t3, $t0	# Shift old bit into the 0th position
+	andi $t5, $t5, 1	# Clear the rest of the bits
+	sllv $t5, $t5, $t1	# Shift old bit to new bit pos
+	or $t3, $t3, $t5	# Or the bit mask to color
+	
+	# Copy the old rank to the new rank
+	srlv $t5, $t4, $t0	# Shift old bit into the 0th position
+	andi $t5, $t5, 1	# Clear the rest of the bits
+	sllv $t5, $t5, $t1	# Shift old bit to new bit pos
+	or $t4, $t4, $t5	# Or the bit mask to rank
+
+	# Save the new bit arrays
+	la $t5, b_haspiece
+	sw $t2, 0($t5)
+	la $t5, b_color
+	sw $t3, 0($t5)
+	la $t5, b_rank
+	sw $t4, 0($t5)
+	
 	jr $ra
 
+updatejump:
+	jr $ra
+	
 victorychk:
    
 	#t0 is for holding 32
@@ -529,35 +603,38 @@ outputboard: 			# Responsible for printing out the board to Python
 	addi $t0, $zero, $zero 	# Bit position and counter
 	addi $t1, $zero, 32 	# End value
 	
-	lw $t2, 0(b_haspiece) 	#has piece
-	lw $t3, 0(b_color) 	#color
-	lw $t4, 0(b_rank) 	#rank
+	la $t2, b_haspiece 	#has piece
+	lw $t2, 0($t2)
+	la $t3, b_color 	#color
+	lw $t3, 0($t3)
+	la $t4, b_rank 		#rank
+	lw $t4, 0($t4)
 	
         outputloop: 		# Loop for outputboard
 	add $t5, $zero, $zero 	# Initialize t5 to 0
-
+	add $t6, $zero, $zero
+	
 	# Print the valid move header
 	li $a0, validmove
 	addi $v0, $zero, 1
 	syscall
-	syscall
 
-	# Shift t0-th value from t2 into t5
+	# Shift t0-th value from t2 into t6
 	sllv $t5, $t2, $t0
-	ori $t5, $t5, 1
-	sll $t5, $t5, 1
+	add $t6, $t6, $t5
+	sll $t6, $t6, 1
 
-	# Shift t0-th value from t3 into t5
+	# Shift t0-th value from t3 into t6
 	sllv $t5, $t3, $t0
-	ori $t5, $t5, 1
-	sll $t5, $t5, 1
+	add $t6, $t6, $t5
+	sll $t6, $t6, 1
 
-	# Shift t0-th value from t4 into t5
+	# Shift t0-th value from t4 into t6
 	sllv $t5, $t4, $t0
-	ori $t5, $t5, 1
+	add $t6, $t6, $t5
 
 	# Print the three-tuple on range [000...111]
-	move $a0, $t5
+	move $a0, $t6
 	addi $v0, $zero, 1
 	syscall
 
