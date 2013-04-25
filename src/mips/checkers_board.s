@@ -82,14 +82,16 @@ newgame:
 		la $t0, valid
 		lb $t0, ($t0)
 		bne $t0, $zero, validp1
-		#send "invalid move message" to python
-		li $v0, 1
-		la $t0, invalidmove
-		lb $a0, ($t0)
-		syscall
-		li $v0, 4
-		la $a0, newline
-		syscall
+		#!send "invalid move message" to python
+		#!send board state
+
+                #li $v0, 1
+		#la $t0, invalidmove
+		#lb $a0, ($t0)
+		#syscall
+		#li $v0, 4
+		#la $a0, newline
+		#syscall
 		j p1
 
 		validp1:
@@ -143,14 +145,16 @@ newgame:
 		la $t0, valid
 		lb $t0, ($t0)
 		bne $t0, $zero, validp2
-		#send "invalid move message" to python
-		li $v0, 1
-		la $t0, invalidmove
-		lb $a0, ($t0)
-		syscall
-		li $v0, 4
-		la $a0, newline
-		syscall
+		#!send "invalid move message" to python
+		#!send board state
+		
+                #li $v0, 1
+		#la $t0, invalidmove
+		#lb $a0, ($t0)
+		#syscall
+		#li $v0, 4
+		#la $a0, newline
+		#syscall
 		j p2
 
 		validp2:
@@ -401,33 +405,83 @@ validatep2:
 
 validateupmove:
 
-	#only needs to handle the 5 shift
-        move $t3, $ra
+	#handles pieces in the center moving up 3/4 or 4/5
 
-        #if the space moving to is the 5th space higher, a move there is valid
+        addi $t0, $zero, 4 #holds 4 for loop stop
+        add $t1, $zero, $zero #outside iterator
+        add $t2, $zero, $zero #inside iterator
+        addi $t3, $zero, 5 #static 5 for space comparison
+        addi $t4, $zero, 4 #static 4 for space comparison
+        add $t5, $zero, $zero #iterator for space
+        #$t6 is used for math
+        addi $t7, $zero, 3 #static 3 for space comparison
 
-        sub $t0, $s3, $s2
-        addi $t1, $zero, 5
+        checkforupmove:
+        #check each space to see if a move is valid.
+        beq $t0, $t1, checkforupjump
+                #check for a "5" move validity from first four spaces
+                move $t2, $zero
+                checkforupmove5:
+                beq $t0, $t2 checkforupmove4
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfum4end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s2, $s1
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 5, validate
+                                beq $t6, $t3, setvalid
+                                #otherwise, check for a jump
+                                j scheckforupjump
+                        cfum4end:
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkforupmove5
+                
+                #check for a "4" move validity from next four spaces
+                checkforupmove4intro:
+                move $t2, zero
+                checkforupmove4:
+                beq $t0, $t2 checkforupmoveEIL
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfum3end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s2, $s1
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 3, validate
+                                beq $t6, $t7, setvalid
+                                #otherwise, check for a jump
+                                j scheckforupjump
+                        cfum3end:
+                         
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkforupmove4
 
-        bne $t0, $t1, checkforupjump
-        
-	
-        j endvalidateupmove
+                checkforupmoveEIL:
+                addi $t1, $zero, 1
+        j checkforupmove
+
         checkforupjump:
-        #if the space moving to is not the 5th space higher, check for a jump
-
-        
+        #if no moves are valid, check to see if a jump is (depricated. moved to different function)
         
 
 	endvalidateupmove:
-	jr $t0
+	jr $ra
 	
 validateupsidemove:
 
-	#only needs to handle the 4 shift
-	move $t3, $ra
+        #on the side, a piece must be 4 away
+        addi $t1, $zero, 4
+        
+        #get the difference between the spaces
+        sub $t0, $s2, $s1
+        #if the difference is 4, validate
+        beq $t0, $t1, setvalid
 
-	jr $t0
+        #otherwise, its invalid, continue on
+	jr $ra
 
 validateupjump:
 
@@ -440,19 +494,83 @@ validateupsidejump:
 
 validatedownmove:
 
-	#only needs to handle the 5 shift
-	move $t3, $ra
+	#handles pieces in the center moving up 3/4 or 4/5
 
+        addi $t0, $zero, 4 #holds 4 for loop stop
+        add $t1, $zero, $zero #outside iterator
+        add $t2, $zero, $zero #inside iterator
+        addi $t3, $zero, 5 #static 5 for space comparison
+        addi $t4, $zero, 4 #static 4 for space comparison
+        add $t5, $zero, $zero #iterator for space
+        #$t6 is used for math
+        addi $t7, $zero, 3 #static 3 for space comparison
 
-	jr $t0
+        checkforupmove:
+        #check each space to see if a move is valid.
+        beq $t0, $t1, checkforupjump
+                #check for a "5" move validity from first four spaces
+                move $t2, $zero
+                checkforupmove5:
+                beq $t0, $t2 checkforupmove4
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfum4end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s1, $s2
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 3, validate
+                                beq $t6, $t7, setvalid
+                                #otherwise, check for a jump
+                                j scheckforupjump
+                        cfum4end:
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkforupmove5
+                
+                #check for a "4" move validity from next four spaces
+                checkforupmove4intro:
+                move $t2, zero
+                checkforupmove4:
+                beq $t0, $t2 checkforupmoveEIL
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfum3end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $s1, $s2
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #if the difference between the spaces if 5, validate
+                                beq $t6, $t3, setvalid
+                                #otherwise, check for a jump
+                                j scheckforupjump
+                        cfum3end:
+                         
+                        addi $t2, $zero, 1
+                        addi $t5, $t5, 1
+                j checkforupmove4
+
+                checkforupmoveEIL:
+                addi $t1, $zero, 1
+        j checkforupmove
+
+        checkforupjump:
+        #if no moves are valid, check to see if a jump is (depricated. moved to different function)
+        
+
+	endvalidateupmove:
+	jr $ra
 
 validatedownsidemove:
 
-	#only needs to handle the 4 shift
-	move $t3, $ra
+        #on the side, a piece must be 4 away
+        addi $t1, $zero, 4
+        
+        #get the difference between the spaces
+        sub $t0, $s1, $s2
+        #if the difference is 4, validate
+        beq $t0, $t1, setvalid
 
-
-	jr $t0
+        #otherwise, its invalid, continue on
+	jr $ra
 
 validatedownjump:
 
