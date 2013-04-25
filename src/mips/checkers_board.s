@@ -583,7 +583,57 @@ validateupleftsidejump:
         bne $t0, $t1, endvalidateupleftsidejump
 
         #need to make sure an opposing piece is in the middle
-        #which sucks a lot
+        addi $t0, $zero, 4 #holds 4 for loop stop
+        add $t1, $zero, $zero #outside iterator
+        add $t2, $zero, $zero #inside iterator
+        addi $t3, $zero, 5 #static 5 for space comparison
+        addi $t4, $zero, 4 #static 4 for space comparison
+        add $t5, $zero, $zero #iterator for space
+        #$t6 is used for math
+        addi $t7, $zero, 3 #static 3 for space comparison
+
+        checkforupjumpl:
+        #check each space to see if a move is valid.
+        beq $t0, $t1, endvalidateupleftsidejump
+                #check for a "5" move validity from first four spaces
+                move $t2, $zero
+                checkforupjumpl5:
+                beq $t0, $t2 checkforupjumpl4intro
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfujl4end
+                                #if the middle space is the space we're on, we can validate
+                                sub $t6, $t5, $s1
+                                #if the difference between the spaces if 5, validate
+                                beq $t6, $t3, setvalid
+                                #otherwise, check for a jump
+                                j endvalidateupleftsidejump
+                        cfujl4end:
+                        addi $t2, $t2, 1
+                        addi $t5, $t5, 1
+                j checkforupjumpl5
+                
+                #check for a "4" move validity from next four spaces
+                checkforupjumpl4intro:
+                move $t2, $zero
+                checkforupjumpl4:
+                beq $t0, $t2 checkforupjumplEIL
+                        #check to see if the from space is in this row
+                        bne $t5, $s1, cfujl3end
+                                #if the from space is the space we're on, we can validate
+                                sub $t6, $t5, $s1
+                                #if the difference between the spaces is 4, validate
+                                beq $t6, $t4, setvalid
+                                #otherwise, not a valid jump
+                                j endvalidateupleftsidejump
+                        cfujl3end:
+                         
+                        addi $t2, $t2, 1
+                        addi $t5, $t5, 1
+                j checkforupjumpl4
+
+                checkforupjumplEIL:
+                addi $t1, $t1, 1
+        j checkforupjumpl
 
         endvalidateupleftsidejump:
         jr $ra
@@ -597,7 +647,6 @@ validateuprightsidejump:
         bne $t0, $t1, endvalidateuprightsidejump
 
         #need to make sure an opposing piece is in the middle
-        #which sucks a lot
 
         endvalidateuprightsidejump:
         jr $ra
