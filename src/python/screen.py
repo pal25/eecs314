@@ -83,6 +83,8 @@ class GameScreen(GenericScreen):
 
         self.draw_text_small(turn, BLACK, WHITE, self.width-(self.width/3.05)/2, self.height*1/20)
 
+        self.button_group = pygame.sprite.Group()
+
         pos = (self.win_center_width, self.height*15/20)
         self.button_group.add(Button(self, RESTART, pos, "Restart", WHITE, BLACK))
         pos = (self.win_center_width, self.height*18/20)

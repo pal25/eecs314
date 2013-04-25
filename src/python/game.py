@@ -165,7 +165,7 @@ class Game(object):
                     if event.type == pygame.MOUSEBUTTONUP:
                         pos = pygame.mouse.get_pos()
                         for sprite in self.screen.button_group:
-                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                            if sprite.rect.collidepoint(pos):
                                 if sprite.btype == END_OF_TURN:
                                     self.write_spim(str(END_OF_TURN) + "\n")
                                     if self.player_num == 0:
@@ -187,7 +187,7 @@ class Game(object):
                                 self.current_piece = sprite
                                 state = P1_MOVE_CLICKED
                                 logging.root.info("State: P1_MOVE_CLICKED")
-                        
+                            
             elif state == P1_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
@@ -231,7 +231,6 @@ class Game(object):
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
                         pos = pygame.mouse.get_pos()
-
                         for sprite in self.screen.button_group:
                             if sprite.rect.collidepoint(pos):
                                 if sprite.btype == END_OF_TURN:
@@ -240,6 +239,7 @@ class Game(object):
                                     pygame.display.flip()
                                     state = P1_MOVE
                                     logging.root.info("State: P1_MOVE")                                    
+
                                 elif sprite.btype == RESTART:
                                     self.write_spim(str(RESTART) + "\n")
                                     Game()
@@ -251,7 +251,7 @@ class Game(object):
                                 self.current_piece = sprite
                                 state = P2_MOVE_CLICKED
                                 logging.root.info("State: P2_MOVE_CLICKED")
-                        
+                                
             elif state == P2_MOVE_CLICKED:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONUP:
