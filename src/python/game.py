@@ -56,7 +56,23 @@ class Game(object):
         return data
 
     def parse_data(self, data):
-        pass
+        header = data[0:2]
+        if header == "111":
+            state = []
+            for datum in data[3:]:
+                if datum < 4:
+                    state.insert(0, 0)
+                elif datum == 4:
+                    state.insert(0, 1)
+                elif datum == 5:
+                    state.insert(0, 3)
+                elif datum == 6:
+                    state.insert(0, 2)
+                elif datum == 7:
+                    state.insert(0, 4)
+                
+            self.screen.state = state
+            return self.screen.state
 
     def menu(self):
         while not self.running:
@@ -67,7 +83,7 @@ class Game(object):
                         self.player_num = 1
                     elif event.key == pygame.K_DOWN:
                         logging.root.debug("Choosing Two Player")
-                        self.player_num = 2
+                        self.player_num = 0
                     elif event.key == pygame.K_RETURN:
                         logging.root.debug("Chosing Return Value")
                         spim.stdin.write(str(self.player_num) + "\n") #Determines AI/P2
@@ -83,7 +99,7 @@ class Game(object):
             p2 = "Two Player"
             if self.player_num == 1:
                 p1 = "[ " + p1 + " ]"
-            elif self.player_num == 2:
+            elif self.player_num == 0:
                 p2 = "[ " + p2 + " ]"
 
             self.screen.draw_choices(p1, p2)
@@ -165,6 +181,7 @@ class Game(object):
                 if data:
                     state = P1_MOVE
                     state_changed = True
+                    self.parse_data(data)
                     logging.root.info("State: P1_MOVE")
                     
             elif state == P2_AI:
@@ -231,6 +248,7 @@ class Game(object):
                 if data:
                     state = P2_MOVE
                     state_changed = True
+                    self.parse_data(data)
                     logging.root.info("State: P2_MOVE")
 
             self.clock.tick(FPS)
