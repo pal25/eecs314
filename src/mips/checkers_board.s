@@ -789,8 +789,8 @@ updateboard: 		# Update the board positions given and old and new pos
 
 	# Check if a jump was made
 	updatejumpcheck:	
-	slti $t2, $t2, 6
-	bne $t2, $zero, updatepiece
+	slti $t3, $t2, 6
+	bne $t3, $zero, updatepiece
 
 	# Push the $ra to the stack
 	addi $sp, $sp, -4
@@ -845,8 +845,50 @@ updateboard: 		# Update the board positions given and old and new pos
 	jr $ra
 
 updatejump:
+	# $t2 holds num of spaces
+	# $t1 holds new pos
+	# $t0 holds old pos
+
+	# Determine which number is larger
+	slt $t3, $t0, $t1
+	beq $t3, $zero, updatejnewgtold 	# Take if $t1 > $t0
 	
-	jr $ra
+        updatejoldgtnew: 		# Figure out piece to remove old > new
+	        sub $t3, $t0, $t1 	# The difference old - new
+	        slti $t4, $t3, 8
+	        bne $t4, $zero, ogtncount2 	# Take if $t3 == 7
+        ogtncount1:			# $t3 == 9
+	        addi $t3, $t1, 5	# Count 5 from new
+	        j updateremove		# Jump to remove code
+        ogtncount2:			# $t3 == 7
+	        addi $t3, $t1, 4	# Count 4 from new
+	        j updateremove		# Jump to remove code
+
+
+        updatejnewgtold: 		# Figure out piece to remove new > old 	
+	        sub $t3, $t1, $t0 	# The difference new - old
+	        slti $t4, $t3, 8
+	        bne $t4, $zero, ngtocount2 	# Take if $t3 == 7
+        ngtocount1:			# $t3 == 9
+	        addi $t3, $t0, 4	# Count 4 from old
+	        j updateremove		# Jump to remove code
+        ngtocount2:			# $t3 == 7
+	        addi $t3, $t0, 3	# Count 3 from old
+	        j updateremove		# Jump to remove code
+
+
+        updatejremove:			# Remove the position
+	        la $t4, b_haspiece 	# Get the addr for the piece array
+	        lw $t4, 0($t4)		# Load the array into $t4
+	
+	        addi $t5, $zero, 1 	# Put a 1 in $t5
+	        sllv $t5, $t5, $t3 	# Shift the 1 $t3 units
+	        not $t5, $t5 		# Invert to all 1's and 1 zero
+	        and $t4, $t4, $t5 	# And the bit mask to has_piece
+
+	        la $t5, b_haspiece 	# Get the addr for the piece array 
+	        sw $t4, 0($t5) 		# Store the new array from $t4
+                jr $ra 			# Return to updateboard
 	
 victorychk:
    
