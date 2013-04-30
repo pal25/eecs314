@@ -59,6 +59,9 @@ newgame:
         jal outputboard
 
 	p1:
+                
+                move $s4, $zero #player turn. 0 for p1, 1 for p2
+
 		#get message for move
 		li $v0, 5
 		syscall
@@ -119,6 +122,7 @@ newgame:
 	j newgame
 
 	p2:
+                addi $s4, $zero, 1 #player turn. 0 for p1, 1 for p2
 		#if AI enabled (not equal to 0), jump to AI
 		la $t0, isai
 		lb $t0, ($t0)
@@ -576,7 +580,6 @@ validateupjump:
 
 validateupleftsidejump:
 
-        move $t8, $ra
         #check if the to space is 9 greater than the from
         sub $t0, $s2, $s1
         addi $t1, $zero, 9
@@ -592,6 +595,10 @@ validateupleftsidejump:
         add $t5, $zero, $zero #iterator for space
         #$t6 is used for math
         addi $t7, $zero, 3 #static 3 for space comparison
+        la $t8, b_haspiece
+        lw $t8, ($t8)
+        la $t9, b_color
+        lw $t9, ($t9)
 
         checkforupjumpl:
         #check each space to see if a move is valid.
@@ -604,8 +611,13 @@ validateupleftsidejump:
                         bne $t5, $s1, cfujl4end
                                 #if the middle space is the space we're on, we can validate
                                 sub $t6, $t5, $s1
-                                #if the difference between the spaces if 5, validate
-                                beq $t6, $t3, setvalid
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidateupleftsidejump
+                                beq $t9, $s4, endvalidateupleftsidejump
+                                j setvalid
                                 #otherwise, check for a jump
                                 j endvalidateupleftsidejump
                         cfujl4end:
@@ -621,9 +633,14 @@ validateupleftsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfujl3end
                                 #if the from space is the space we're on, we can validate
-                                sub $t6, $t5, $s1
-                                #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
+                                sub $t6, $t4, $s1
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidateupleftsidejump
+                                beq $t9, $s4, endvalidateupleftsidejump
+                                j setvalid
                                 #otherwise, not a valid jump
                                 j endvalidateupleftsidejump
                         cfujl3end:
@@ -637,11 +654,10 @@ validateupleftsidejump:
         j checkforupjumpl
 
         endvalidateupleftsidejump:
-        jr $t8
+        jr $ra
 
 validateuprightsidejump:
 
-        move $t8, $ra
         #check if the to space is 7 greater than the from
         sub $t0, $s2, $s1
         addi $t1, $zero, 7
@@ -657,6 +673,10 @@ validateuprightsidejump:
         add $t5, $zero, $zero #iterator for space
         #$t6 is used for math
         addi $t7, $zero, 3 #static 3 for space comparison
+        la $t8, b_haspiece
+        lw $t8, ($t8)
+        la $t9, b_color
+        lw $t9, ($t9)
 
         checkforupjumpr:
         #check each space to see if a move is valid.
@@ -668,10 +688,15 @@ validateuprightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfujr4end
                                 #if the middle space is the space we're on, we can validate
-                                sub $t6, $t5, $s1
-                                #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
-                                #otherwise, check for a jump
+                                sub $t6, $t4, $s1
+                                #if the difference between the spaces i 4, validate
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidateuprightsidejump
+                                beq $t9, $s4, endvalidateuprightsidejump
+                                j setvalid
                                 j endvalidateupleftsidejump
                         cfujr4end:
                         addi $t2, $t2, 1
@@ -686,9 +711,15 @@ validateuprightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfujr3end
                                 #if the from space is the space we're on, we can validate
-                                sub $t6, $t5, $s1
+                                sub $t6, $t7, $s1
                                 #if the difference between the spaces is 3, validate
-                                beq $t6, $t7, setvalid
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidateuprightsidejump
+                                beq $t9, $s4, endvalidateuprightsidejump
+                                j setvalid
                                 #otherwise, not a valid jump
                                 j endvalidateuprightsidejump
                         cfujr3end:
@@ -702,7 +733,7 @@ validateuprightsidejump:
         j checkforupjumpr
 
         endvalidateuprightsidejump:
-        jr $t8
+        jr $ra
 
 validatedownmove:
 
@@ -856,8 +887,6 @@ validatedownjump:
 
 validatedownrightsidejump:
 
-        move $t8, $ra
-
         #check if the to space is 9 greater than the from
         sub $t0, $s1, $s2
         addi $t1, $zero, 9
@@ -873,6 +902,10 @@ validatedownrightsidejump:
         add $t5, $zero, $zero #iterator for space
         #$t6 is used for math
         addi $t7, $zero, 3 #static 3 for space comparison
+        la $t8, b_haspiece
+        lw $t8, ($t8)
+        la $t9, b_color
+        lw $t9, ($t9)
 
         checkfordownjumpr:
         #check each space to see if a move is valid.
@@ -884,9 +917,15 @@ validatedownrightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfdjr4end
                                 #if the middle space is the space we're on, we can validate
-                                sub $t6, $s1, $t5
-                                #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
+                                sub $t6, $s1, $t4
+                                #if the difference between the spaces i 4, validate
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidatedownrightsidejump
+                                beq $t9, $s4, endvalidatedownrightsidejump
+                                j setvalid
                                 #otherwise, check for a jump
                                 j endvalidatedownrightsidejump
                         cfdjr4end:
@@ -902,10 +941,15 @@ validatedownrightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfdjr3end
                                 #if the from space is the space we're on, we can validate
-                                sub $t6, $s1, $t5
-                                #if the difference between the spaces is 5, validate
-                                beq $t6, $t3, setvalid
-                                #otherwise, not a valid jump
+                                sub $t6, $s1, $t3
+                                #if the difference between the spaces if r5, validate
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidatedownrightsidejump
+                                beq $t9, $s4, endvalidatedownrightsidejump
+                                j setvalid
                                 j endvalidatedownrightsidejump
                         cfdjr3end:
                          
@@ -918,11 +962,10 @@ validatedownrightsidejump:
         j checkfordownjumpr
 
         endvalidatedownrightsidejump:
-        jr $t8
+        jr $ra
 
 validatedownleftsidejump:
 
-        move $t8, $ra
         #check if the from space is 7 greater than the to
         sub $t0, $s1, $s2
         addi $t1, $zero, 7
@@ -938,7 +981,10 @@ validatedownleftsidejump:
         add $t5, $zero, $zero #iterator for space
         #$t6 is used for math
         addi $t7, $zero, 3 #static 3 for space comparison
-
+        la $t8, b_haspiece
+        lw $t8, ($t8)
+        la $t9, b_color
+        lw $t9, ($t9)
         checkfordownjumpl:
         #check each space to see if a move is valid.
         beq $t0, $t1, endvalidatedownleftsidejump
@@ -949,9 +995,15 @@ validatedownleftsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfdjl4end
                                 #if the middle space is the space we're on, we can validate
-                                sub $t6, $s1, $t5
+                                sub $t6, $s1, $t3
                                 #if the difference between the spaces if 3, validate
-                                beq $t6, $t7, setvalid
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidatedownleftsidejump
+                                beq $t9, $s4, endvalidatedownleftsidejump
+                                j setvalid
                                 #otherwise, check for a jump
                                 j endvalidatedownleftsidejump
                         cfdjl4end:
@@ -966,11 +1018,17 @@ validatedownleftsidejump:
                 beq $t0, $t2 checkfordownjumplEIL
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfdjl3end
-                                #if the from space is the space we're on, we can validate
-                                sub $t6, $s1, $t5
+                                #if the middle space is the space we're on, we can validate
+                                sub $t6, $s1, $t4
                                 #if the difference between the spaces is 4, validate
-                                beq $t6, $t4, setvalid
-                                #otherwise, not a valid jump
+                                srlv $t8, $t8, $t6
+                                srlv $t9, $t9, $t6
+                                andi $t8, $t8, 1
+                                andi $t9, $t9, 1
+                                beq $t8, $zero, endvalidatedownleftsidejump
+                                beq $t9, $s4, endvalidatedownleftsidejump
+                                j setvalid
+                                #otherwise, check for a jump
                                 j endvalidatedownleftsidejump
                         cfdjl3end:
                          
@@ -983,7 +1041,7 @@ validatedownleftsidejump:
         j checkfordownjumpl
 
         endvalidatedownleftsidejump:
-        jr $t8
+        jr $ra
 
 setvalid:
 
@@ -1082,15 +1140,17 @@ updatejump:
 	        sub $t3, $t0, $t1 	# The difference old - new
 
 	        # Check the line 
-	        slti $t4 $t0, 12 	# If $t0 < 12 ? 1 : 0
-		bne $t4, $zero, ogtncount34
+	        slti $t4, $t0, 8
+                bne $t4, $zero, ogtncount34
+                slti $t4 $t0, 12 	# If $t0 < 12 ? 1 : 0
+		bne $t4, $zero, ogtncount54
 	        slti $t4, $t0, 16	# IF $t0 < 16 ? 1 : 0
-	        bne $t4, $zero, ogtncount54
+	        bne $t4, $zero, ogtncount34
 	        slti $t4 $t0, 20 	# If $t0 < 20 ? 1 : 0
-		bne $t4, $zero, ogtncount34
+		bne $t4, $zero, ogtncount54
 	        slti $t4, $t0, 24	# IF $t0 < 24 ? 1 : 0
-	        bne $t4, $zero, ogtncount54
-	        j ogtncount34 		# ELSE $t0 >= 24
+	        bne $t4, $zero, ogtncount34
+	        j ogtncount54 		# ELSE $t0 >= 24
 
         ogtncount54:	
 	        slti $t4, $t3, 8
