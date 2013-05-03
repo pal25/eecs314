@@ -1,0 +1,59 @@
+\documentclass[]{article}
+
+\title{EECS314 Project Report: Checkers}
+\author{Matt McKee (mwm67), Patrick Landis (pal25)}
+\date{05/02/2013}
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+\maketitle
+
+\section*{Project Description}
+This project involves building a checkers game in MIPS. Specifically this project will use SPIM for the backend and Python to generate a GUI and input to SPIM. This project will also attempt to implement two versions of the game -- a two player version and a one player version against an AI.
+
+\section*{Major Challenges}
+Most of the problems were with the MIPS code. The biggest problem is that to debugging in SPIM is a time consuming process whereas the Python part of the project had a rather fast turnaround time.
+
+\section*{Key Components}
+\begin{enumerate}
+\item State Machine: this state machine will be the main method used to "run" a game. It will contain states to cover necessary game portions, such as "initialization", "player input", "player move" and "AI turn", and will handle information retrieved from the "board" data structure (explained below) about when to "conclude" a game (such as loss, forfeit, or program termination). A player's turn will be broken down into several states, to handle any input received from the player. The AI turn state will be much simpler, as it will simply need to communicate with the AI. A "check" state will be used to watch for stalemates.
+
+\item Data Structures: Two main data structures will be employed to manage the game: a "board" and a "piece". The "board" will contain all information about piece location, allegiance (player or AI), and rank (pawn or king). It will also monitor how many pieces each side has remaining. It will also contain a method for promoting a piece when it reaches the opponent's home row. The "piece" structure will contain the methods for moving pieces, including jumps, and for removing pieces. 
+
+\item Checkers AI: The checkers AI will implement an Alpha-Beta search algorithm which will evaluate
+moves based on metrics that include taking a piece, protecting pieces, if it can be moved onto one
+of the sides of the board, etc...
+ 
+\item Python Frontend: The Python frontend will receive data by piping stdin/stdout to/from the Python.
+The chess program will be able to send and receive messages to Python which will take actions based upon
+those messages to update the game board and send key presses to the MIPS backend.
+\end{enumerate}
+
+\section*{Component Integation}
+\subsection*{Frontend}The Python frontend was initially built separate from the MIPS backend. In addition it was developed in stages to facilitate easy debugging. Initially the screen built because it would facilitate testing the rest of the frontend. Once the screen was built a working prototype of the game was setup with checker pieces that were able to move but player controlled. Once a working version was complete, work was started on the message passing system between Python and MIPS. Python has to be able to parse messages and then update the state and game board. Finally work begain on integrating Python and MIPS together.
+
+\subsection*{Backend}
+
+\section*{Specific Contributions}
+\subsection*{Matt's Contributions}
+
+\subsection*{Patrick's Contributions}
+\begin{enumerate}
+\item Python message parser which is responsible for reading messages from MIPS and determining the actions to take based on those messages.
+
+\item Implemented the Python message communication to MIPS which involved taking data and packing that dta into a message and then piping that message to MIPS. 
+
+\item Python game screen responsible for all the graphical functionality of the game.
+
+\item Python game board and sprites which are responsible for populating the screen with objects that users can view.
+
+\item Python game state which is maintained in sync with from the MIPS game state.
+
+\item MIPS draw board functionality responsible for reading the data structures for MIPS's representation of the game.
+
+\item MIPS board message communication responsible for sending the data from the MIPS draw board to Python.
+
+\item MIPS update board functionality which is responsible for updating the data structures that store the game information after a move is made.
+\end{enumerate}
+\end{document}
+
