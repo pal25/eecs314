@@ -57,12 +57,15 @@ newgame:
 	add $t1, $zero, $zero
 	sw $t1, ($t0)
   
+        addi $s4, $zero, 1
+
         jal outputboard
 
 	p1:
-                #start a turn with invalide defaulted to 0
+                #start a turn with valide defaulted to 1
 	        la $t0, valid
-	        sb $zero, ($t0)
+                addi $t1, $zero, 1
+	        sb $t1, ($t0)
 	        
                 #get message for move
 		li $v0, 5
@@ -83,8 +86,12 @@ newgame:
                 #if it is the first move of the turn, any piece can be selected, branch ahead
                 bne $s4, $zero, p1endchainmovechk
 
-                #if the last move was a p1 move, then the piece moving from must equal the piece moving to
-                bne $s1, $s2, p1postvalidate
+                #if the last move was a p1 move, then then piece moving from must equal the piece moving to
+                beq $s1, $s2, p1endchainmovechk
+        
+                #if their not equal, invalide the move right out. Continue on, take in a value from Python to preserve syncronization
+                la $t0, valid
+                sb $zero, ($t0)
 
                 p1endchainmovechk:
 		#movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
@@ -92,6 +99,12 @@ newgame:
 		syscall
 		move $s2, $v0
    
+                #if we know the move is invalid already, jump past validation
+                la $t0, valid
+                lb $t0, ($t0)
+
+                beq $t0, $zero, p1postvalidate
+
                 move $s4, $zero #player turn. 0 for p1, 1 for p2
 		
                 #validate the move 
@@ -136,9 +149,10 @@ newgame:
 	j newgame
 
 	p2:
-                #start a turn with invalide defaulted to 0
+                #start a turn with valid defaulted to 1
 	        la $t0, valid
-	        sb $zero, ($t0)
+                addi $t1, $zero, 1
+	        sb $t1, ($t0)
                 
 		#if AI enabled (not equal to 0), jump to AI
 		la $t0, isai
@@ -161,21 +175,32 @@ newgame:
 		beq $s1, $t0, newgame
 		
                 #if it is the first move of the turn, any piece can be selected, branch ahead
-                beq $s4, $zero, p1endchainmovechk
+                beq $s4, $zero, p2endchainmovechk
 
                 #if the last move was a p2 move, then the piece moving from must equal the piece moving to
-                bne $s1, $s2, p1postvalidate
+                beq $s1, $s2, p2endchainmovechk
 
+                #if their not equal, invalide the move right out. Continue on, take in a value from Python to preserve syncronization
+                la $t0, valid
+                sb $zero, ($t0)
+                
                 p2endchainmovechk:
 		#movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
 		li $v0, 5
 		syscall
 		move $s2, $v0
 	
+                #if we know the move is invalid already, jump past validation
+                la $t0, valid
+                lb $t0, ($t0)
+
+                beq $t0, $zero, p2postvalidate
+               
                 addi $s4, $zero, 1 #player turn. 0 for p1, 1 for p2
 		
                 jal validatep2
-
+                
+                p2postvalidate:
 		la $t0, valid
 		lb $t0, ($t0)
 		bne $t0, $zero, validp2
