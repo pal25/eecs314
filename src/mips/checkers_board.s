@@ -1053,13 +1053,13 @@ setvalid:
 	jr $s0
 
 updateboard: 		# Update the board positions given and old and new pos
-	#s0 = ra
+	move $s0, $ra
 	move $t0, $s1 	# Position from
 	move $t1, $s2 	# Position to
 
 	# Determine which number is larger
-	slt $t2, $t0, $t1
-	bne $t2, $zero, updatesub1
+	slt $t2, $t0, $t1 # if t0 < t1, set t2
+	bne $t2, $zero, updatesub1 #if t2 set, then branch
 
 	# Subtract larger number from smaller number
         updatesub2:
@@ -1072,27 +1072,29 @@ updateboard: 		# Update the board positions given and old and new pos
 
 	# Check if a jump was made
 	updatejumpcheck:	
-	slti $t3, $t2, 6
-	bne $t3, $zero, updatepiece
+	slti $t3, $t2, 6 #if the difference is less than 6, set t3
+	bne $t3, $zero, updatepiece #if t3 set, then its just a move, and we can branch over the jump checking
 
+        #matt commented out for testing
 	# Push the $ra to the stack
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
+	# addi $sp, $sp, -4
+	# sw $ra, 0($sp)
 
 	# Call update jump
 	jal updatejump
 
+        # matt commented out for testing
 	# Pop the $ra from the stack
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
+	# lw $ra, 0($sp)
+	# addi $sp, $sp, 4
 	
         updatepiece:	
 	la $t2, b_haspiece
-	lw $t2, 0($t2)
+	lw $t2, ($t2)
 	la $t3, b_color
-	lw $t3, 0($t3)
+	lw $t3, ($t3)
 	la $t4, b_rank
-	lw $t4, 0($t4)
+	lw $t4, ($t4)
 
 	# Convert the old pos to 0
 	addi $t5, $zero, 1 	# Put a 1 in $t5
@@ -1108,15 +1110,50 @@ updateboard: 		# Update the board positions given and old and new pos
 	# Copy the old color to the new color
 	srlv $t5, $t3, $t0	# Shift old bit into the 0th position
 	andi $t5, $t5, 1	# Clear the rest of the bits
-	sllv $t5, $t5, $t1	# Shift old bit to new bit pos
-	or $t3, $t3, $t5	# Or the bit mask to color
+	beq $t5, $zero, updatetored #if the old color is red, jump to the "make red" code
+
+        #BUG: if the space moving "to" was ever set to black, taking the or will keep it black.
+        #sllv $t5, $t5, $t1	# Shift old bit to new bit pos
+        #or $t3, $t3, $t5	# Or the bit mask to color
 	
-	# Copy the old rank to the new rank
+        updatetoblack:
+        #make the "to" space black, keep all others the same. t5 currently holds 1
+	sllv $t5, $t5, $t1      #shift the old bit into the new position
+        or $t3, $t3, $t5        #or the bit mask to switch the "to" color and keep the rest the same
+        j updaterank
+        
+        updatetored:
+        #make the "to" space red, keep all others the same. t5 currently holds 0
+        addi $t5, $zero, 1      #make the LSB 1
+        sllv $t5, $t5, $t1      #shift the bit into the "to"  position
+        not $t5, $t5            #invert the bits
+        and $t3, $t3, $t5       #and the bit mask to switch the "to" color and keep the rest the same
+        
+        updaterank:
+        # Copy the old rank to the new rank
 	srlv $t5, $t4, $t0	# Shift old bit into the 0th position
 	andi $t5, $t5, 1	# Clear the rest of the bits
-	sllv $t5, $t5, $t1	# Shift old bit to new bit pos
-	or $t4, $t4, $t5	# Or the bit mask to rank
+        beq $t5, $zero, updatetopawn #if the old rank is pawn, jump to the "make pawn" code
 
+        #BUG: always keeps the rank what is was
+	#sllv $t5, $t5, $t1	# Shift old bit to new bit pos
+	#or $t4, $t4, $t5	# Or the bit mask to rank
+
+        updatetoking:
+        #make the "to" space a king, keep all others the same. t5 currently holds 1
+	sllv $t5, $t5, $t1      #shift the old bit into the new position
+        or $t4, $t4, $t5        #or the bit mask to switch the "to" color and keep the rest the same
+        j updatesaveboard
+        
+        updatetopawn:
+        #make the "to" space a pawn, keep all others the same. t5 currently holds 0
+        addi $t5, $zero, 1      #make the LSB 1
+        sllv $t5, $t5, $t1      #shift the bit into the "to" position
+        not $t5, $t5            #invert the bits
+        and $t4, $t4, $t5       #and the bit mask to switch the "to" color and keep the rest the same
+
+
+        updatesaveboard:
 	# Save the new bit arrays
 	la $t5, b_haspiece
 	sw $t2, 0($t5)
@@ -1125,23 +1162,22 @@ updateboard: 		# Update the board positions given and old and new pos
 	la $t5, b_rank
 	sw $t4, 0($t5)
 	
-	jr $ra
+	jr $s0
 
 updatejump:
 	# $t2 holds num of spaces
+                # that is, the difference between the old space and the new space
 	# $t1 holds new pos
 	# $t0 holds old pos
 
 	# Determine which number is larger
-	slt $t3, $t0, $t1
-	beq $t3, $zero, updatejnewgtold 	# Take if $t1 > $t0
+	slt $t3, $t0, $t1                       # Set $t3 if $t0 < $t1, means old < new, (new > old)
+	bne $t3, $zero, updatejnewgtold 	# Take if $t3 is not set, means t0
 
         updatejoldgtnew: 		# Figure out piece to remove old > new
 	        sub $t3, $t0, $t1 	# The difference old - new
 
 	        # Check the line 
-	        slti $t4, $t0, 8
-                bne $t4, $zero, ogtncount34
                 slti $t4 $t0, 12 	# If $t0 < 12 ? 1 : 0
 		bne $t4, $zero, ogtncount54
 	        slti $t4, $t0, 16	# IF $t0 < 16 ? 1 : 0
@@ -1150,7 +1186,9 @@ updatejump:
 		bne $t4, $zero, ogtncount54
 	        slti $t4, $t0, 24	# IF $t0 < 24 ? 1 : 0
 	        bne $t4, $zero, ogtncount34
-	        j ogtncount54 		# ELSE $t0 >= 24
+                slti $t4, $t0, 28
+                bne $t4, $zero, ogtncount54
+	        j ogtncount34 		# ELSE $t0 >= 24
 
         ogtncount54:	
 	        slti $t4, $t3, 8
@@ -1171,21 +1209,23 @@ updatejump:
         ogtncount234:			# $t3 == 7
 	        addi $t3, $t1, 3	# Count 4 from new
 	        j updatejremove		# Jump to remove code
-
-	
-
+        
+        
+        
         updatejnewgtold: 		# Figure out piece to remove new > old 	
 	        sub $t3, $t1, $t0 	# The difference new - old
 
 	        # Check the line 
 	        slti $t4 $t1, 12 	# If $t1 < 12 ? 1 : 0
-		bne $t4, $zero, ngtocount34
+		bne $t4, $zero, ngtocount54
 	        slti $t4, $t1, 16	# IF $t1 < 16 ? 1 : 0
-	        bne $t4, $zero, ngtocount54
+	        bne $t4, $zero, ngtocount34
 	        slti $t4 $t1, 20 	# If $t1 < 20 ? 1 : 0
-		bne $t4, $zero, ngtocount34
+		bne $t4, $zero, ngtocount54
 	        slti $t4, $t1, 24	# IF $t1 < 24 ? 1 : 0
-	        bne $t4, $zero, ngtocount54
+	        bne $t4, $zero, ngtocount34
+                slti $t4, $t0, 28
+                bne $t4, $zero, ngtocount54
 	        j ngtocount34		# ELSE $t1 > 24
 
         ngtocount34:	
@@ -1209,10 +1249,9 @@ updatejump:
 	        j updatejremove		# Jump to remove code
 
 
-	
-        updatejremove:			# Remove the position
+        updatejremove:			# Remove the position, which is stored in t3
 	        la $t4, b_haspiece 	# Get the addr for the piece array
-	        lw $t4, 0($t4)		# Load the array into $t4
+	        lw $t4, ($t4)		# Load the array into $t4
 	
 	        addi $t5, $zero, 1 	# Put a 1 in $t5
 	        sllv $t5, $t5, $t3 	# Shift the 1 $t3 units
@@ -1220,7 +1259,7 @@ updatejump:
 	        and $t4, $t4, $t5 	# And the bit mask to has_piece
 
 	        la $t5, b_haspiece 	# Get the addr for the piece array 
-	        sw $t4, 0($t5) 		# Store the new array from $t4
+	        sw $t4, ($t5) 		# Store the new array from $t4
                 jr $ra 			# Return to updateboard
 	
 victorychk:
