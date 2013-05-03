@@ -1,4 +1,4 @@
-EECS 314 Chess Project 
+EECS 314 Checkers Project 
 -------------------
 Team Members: 
 + Matt McKee, <mwm67@case.edu> 
