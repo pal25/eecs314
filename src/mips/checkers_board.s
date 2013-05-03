@@ -28,6 +28,7 @@ newline: .asciiz "\n"
 #s1 register used for "from" space
 #s2 register used for "to" space
 #s3 register used to help returns during jump
+#s4 for turn value
 #also use t0-t3
 main:
 newgame:
@@ -59,15 +60,16 @@ newgame:
         jal outputboard
 
 	p1:
-                
-                move $s4, $zero #player turn. 0 for p1, 1 for p2
-
-		#get message for move
+                #start a turn with invalide defaulted to 0
+	        la $t0, valid
+	        sb $zero, ($t0)
+	        
+                #get message for move
 		li $v0, 5
 		syscall
 		move $s1, $v0
 
-		#check for end of message, end turn if yes
+                #check for end of message, end turn if yes
 		la $t0, eom
 		lb $t0, ($t0)
 		beq $s1, $t0, endp1
@@ -76,14 +78,26 @@ newgame:
 		la $t0, reset
 		lb $t0, ($t0)
 		beq $s1, $t0, newgame
-		
+                
+                
+                #if it is the first move of the turn, any piece can be selected, branch ahead
+                bne $s4, $zero, p1endchainmovechk
+
+                #if the last move was a p1 move, then the piece moving from must equal the piece moving to
+                bne $s1, $s2, p1postvalidate
+
+                p1endchainmovechk:
 		#movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
 		li $v0, 5
 		syscall
 		move $s2, $v0
    
-		#validate the move 
+                move $s4, $zero #player turn. 0 for p1, 1 for p2
+		
+                #validate the move 
 		jal validatep1
+
+                p1postvalidate:
 
 		la $t0, valid
 		lb $t0, ($t0)
@@ -122,7 +136,10 @@ newgame:
 	j newgame
 
 	p2:
-                addi $s4, $zero, 1 #player turn. 0 for p1, 1 for p2
+                #start a turn with invalide defaulted to 0
+	        la $t0, valid
+	        sb $zero, ($t0)
+                
 		#if AI enabled (not equal to 0), jump to AI
 		la $t0, isai
 		lb $t0, ($t0)
@@ -143,12 +160,21 @@ newgame:
 		lb $t0, ($t0)
 		beq $s1, $t0, newgame
 		
+                #if it is the first move of the turn, any piece can be selected, branch ahead
+                beq $s4, $zero, p1endchainmovechk
+
+                #if the last move was a p2 move, then the piece moving from must equal the piece moving to
+                bne $s1, $s2, p1postvalidate
+
+                p2endchainmovechk:
 		#movements come in pairs, so if the message wasn't "end of turn", it must be the space moving to
 		li $v0, 5
 		syscall
 		move $s2, $v0
 	
-		jal validatep2
+                addi $s4, $zero, 1 #player turn. 0 for p1, 1 for p2
+		
+                jal validatep2
 
 		la $t0, valid
 		lb $t0, ($t0)
@@ -610,13 +636,13 @@ validateupleftsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfujl4end
                                 #if the middle space is the space we're on, we can validate
-                                sub $t6, $t5, $s1
-                                srlv $t8, $t8, $t6
-                                srlv $t9, $t9, $t6
-                                andi $t8, $t8, 1
-                                andi $t9, $t9, 1
-                                beq $t8, $zero, endvalidateupleftsidejump
-                                beq $t9, $s4, endvalidateupleftsidejump
+                                addi $t6, $t5, 5       # Get the middle space
+                                srlv $t8, $t8, $t6      # Shift "b_haspiece" right to get the middle piece
+                                srlv $t9, $t9, $t6      # Shift "b_color" right to get the middle piece
+                                andi $t8, $t8, 1        # isolate the bit from "b_haspiece"
+                                andi $t9, $t9, 1        # isolate the bit from "b_color"
+                                beq $t8, $zero, endvalidateupleftsidejump       # if there is not a piece in the middle, don't validate
+                                beq $t9, $s4, endvalidateupleftsidejump         # if the piece in the middle isn't the opposing color, don't validate
                                 j setvalid
                                 #otherwise, check for a jump
                                 j endvalidateupleftsidejump
@@ -633,7 +659,7 @@ validateupleftsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfujl3end
                                 #if the from space is the space we're on, we can validate
-                                sub $t6, $t4, $s1
+                                addi $t6, $t5, 4
                                 srlv $t8, $t8, $t6
                                 srlv $t9, $t9, $t6
                                 andi $t8, $t8, 1
@@ -688,7 +714,7 @@ validateuprightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfujr4end
                                 #if the middle space is the space we're on, we can validate
-                                sub $t6, $t4, $s1
+                                addi $t6, $t5, 4
                                 #if the difference between the spaces i 4, validate
                                 srlv $t8, $t8, $t6
                                 srlv $t9, $t9, $t6
@@ -711,7 +737,7 @@ validateuprightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfujr3end
                                 #if the from space is the space we're on, we can validate
-                                sub $t6, $t7, $s1
+                                addi $t6, $t5, 3
                                 #if the difference between the spaces is 3, validate
                                 srlv $t8, $t8, $t6
                                 srlv $t9, $t9, $t6
@@ -917,7 +943,7 @@ validatedownrightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfdjr4end
                                 #if the middle space is the space we're on, we can validate
-                                sub $t6, $s1, $t4
+                                sub $t6, $t5, $t4
                                 #if the difference between the spaces i 4, validate
                                 srlv $t8, $t8, $t6
                                 srlv $t9, $t9, $t6
@@ -941,7 +967,7 @@ validatedownrightsidejump:
                         #check to see if the from space is in this row
                         bne $t5, $s1, cfdjr3end
                                 #if the from space is the space we're on, we can validate
-                                sub $t6, $s1, $t3
+                                sub $t6, $t5, $t3
                                 #if the difference between the spaces if r5, validate
                                 srlv $t8, $t8, $t6
                                 srlv $t9, $t9, $t6
